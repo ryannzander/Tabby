@@ -1,53 +1,71 @@
 import Link from "next/link";
 
-import { LatestPost } from "~/app/_components/post";
-import { api, HydrateClient } from "~/trpc/server";
+import { DevicePanel } from "~/app/_components/device-panel";
+import { MockNotice } from "~/app/_components/mock-notice";
+import { ProposalLine } from "~/app/_components/proposal-line";
+import { api } from "~/trpc/server";
 
-export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
+export const dynamic = "force-dynamic";
 
-  void api.post.getLatest.prefetch();
+export default async function WalletPage() {
+  // One failure here takes the whole screen down, and the reason is always something the operator
+  // has to fix (no deploy, no AGENT_MODE). Better shown than swallowed.
+  const [mode, summary, pending, recent] = await Promise.all([
+    api.wallet.mode(),
+    api.wallet.summary(),
+    api.wallet.pending(),
+    api.wallet.recent(),
+  ]);
 
   return (
-    <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
-          </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8">
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/usage/first-steps"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">First Steps →</h3>
-              <div className="text-lg">
-                Just the basics - Everything you need to know to set up your
-                database and authentication.
-              </div>
-            </Link>
-            <Link
-              className="flex max-w-xs flex-col gap-4 rounded-xl bg-white/10 p-4 hover:bg-white/20"
-              href="https://create.t3.gg/en/introduction"
-              target="_blank"
-            >
-              <h3 className="text-2xl font-bold">Documentation →</h3>
-              <div className="text-lg">
-                Learn more about Create T3 App, the libraries it uses, and how
-                to deploy it.
-              </div>
-            </Link>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
-              {hello ? hello.greeting : "Loading tRPC query..."}
-            </p>
-          </div>
+    <main className="mx-auto max-w-3xl px-6 pb-24 pt-10">
+      {mode.mock ? <MockNotice /> : null}
 
-          <LatestPost />
-        </div>
-      </main>
-    </HydrateClient>
+      <DevicePanel
+        balance={summary.balance}
+        chain={summary.chain}
+        gate={summary.gate}
+        connected={summary.signerConnected}
+        pending={pending}
+      />
+
+      <section className="mt-12 grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2">
+        <Signatory role="Agent proposes" address={summary.agent} />
+        <Signatory role="You approve" address={summary.human} />
+      </section>
+
+      <section className="mt-14">
+        <h2 className="text-sm font-semibold">Recent</h2>
+
+        {recent.length === 0 ? (
+          <p className="mt-3 max-w-[54ch] text-ink-soft">
+            Nothing has been proposed yet.{" "}
+            <Link href="/chat" className="text-ink underline underline-offset-4">
+              Ask Tappy to move some money
+            </Link>{" "}
+            and it will show up here while it waits for you.
+          </p>
+        ) : (
+          <ul className="mt-3 divide-y divide-rule border-t border-rule">
+            {recent.map((p) => (
+              <ProposalLine key={p.id} {...p} />
+            ))}
+          </ul>
+        )}
+      </section>
+    </main>
+  );
+}
+
+/**
+ * Both keys, named by what they do rather than by "agent address" and "human address". Two
+ * signatures on one instrument is the entire product, so the screen says it in those words.
+ */
+function Signatory({ role, address }: { role: string; address: string }) {
+  return (
+    <div>
+      <div className="text-sm font-semibold">{role}</div>
+      <div className="mt-1 font-mono text-sm break-all text-ink-soft">{address}</div>
+    </div>
   );
 }

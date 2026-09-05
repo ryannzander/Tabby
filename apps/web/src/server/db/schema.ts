@@ -4,10 +4,17 @@
 import { sql } from "drizzle-orm";
 import { index, pgTableCreator, uniqueIndex } from "drizzle-orm/pg-core";
 
+import type OpenAI from "openai";
 import type { z } from "zod";
 
-import { actionSchema } from "@tappy/protocol";
-import type { ProposalStatus, ProposalView, SignerKind } from "@tappy/protocol";
+import type {
+  ProposalStatus,
+  ProposalView,
+  SignerKind,
+  actionSchema,
+} from "@tappy/protocol";
+
+import type { ToolInvocation } from "~/server/agent/loop";
 
 /**
  * `Action` holds `bigint` amounts and `JSON.stringify` throws on those, so the column stores the
@@ -99,6 +106,31 @@ export const proposals = createTable(
  * panel shows and `propose_*` refuses without. Polling `approvals.next` is the heartbeat, so a
  * bridge that dies goes stale on its own without needing a disconnect message.
  */
+/**
+ * The chat transcript, and the model's own history alongside it.
+ *
+ * Both live in one table on purpose. `text` is what the human reads; `items` is the raw Responses
+ * API output the turn produced, reasoning and tool calls included, which the next request has to
+ * send back or the model loses the context for the call it just made. One row cannot half-commit,
+ * so the transcript and the history cannot drift apart. A model that saw a different conversation
+ * from the one on screen is the worst bug this app could have, because every symptom of it looks
+ * like the model being stupid.
+ *
+ * `items` and `toolCalls` are set on assistant rows only. The user's message is already the first
+ * item of the turn it started.
+ */
+export const messages = createTable("message", (d) => ({
+  seq: d.integer().primaryKey().generatedByDefaultAsIdentity(),
+  role: d.varchar({ length: 16 }).$type<"user" | "assistant">().notNull(),
+  text: d.text().notNull(),
+  items: d.jsonb().$type<OpenAI.Responses.ResponseInputItem[]>(),
+  toolCalls: d.jsonb().$type<ToolInvocation[]>(),
+  createdAt: d
+    .timestamp({ withTimezone: true })
+    .$defaultFn(() => new Date())
+    .notNull(),
+}));
+
 export const signerSessions = createTable("signer_session", (d) => ({
   address: d.varchar({ length: 42 }).primaryKey(),
   kind: d.varchar({ length: 16 }).$type<SignerKind>().notNull(),

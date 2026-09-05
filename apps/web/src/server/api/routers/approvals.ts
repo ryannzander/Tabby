@@ -19,7 +19,7 @@ import {
   ALLOWED_TRANSITIONS,
   addressSchema,
   decisionSchema,
-  hexSchema,
+  type hexSchema,
   signerKindSchema,
   type ProposalView,
 } from "@tappy/protocol";
@@ -151,7 +151,8 @@ export const approvalsRouter = createTRPCRouter({
         // and the real press has nowhere to land. Check it here, where the error is readable.
         const recovered = await recoverAddress({
           hash: row.id as `0x${string}`,
-          signature: decision.humanSig as `0x${string}`,
+          // Checked above: an approval without a signature is refused before it reaches here.
+          signature: decision.humanSig!,
         });
         if (recovered.toLowerCase() !== humanAddress()) {
           throw new TRPCError({

@@ -20,6 +20,7 @@
     "start": "next start",
     "test": "vitest run",
     "verify:channel": "tsx --env-file=.env src/server/tappy/verifyChannel.ts",
+    "verify:chat": "tsx --env-file=.env src/server/agent/verifyChat.ts",
     "verify:store": "tsx --env-file=.env src/server/tappy/verifyStore.ts",
     "typecheck": "tsc --noEmit"
   },

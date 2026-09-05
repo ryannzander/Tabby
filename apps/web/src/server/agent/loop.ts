@@ -107,6 +107,9 @@ async function callTool(
   try {
     // The dispatch is uniform but the handlers are not, and TypeScript cannot see that the schema
     // and the handler for a given name agree. They are declared together in tools.ts.
+    // `.call(tools, ...)` below is exactly the binding unbound-method asks for, but the rule
+    // cannot see that through the cast.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     const handler = tools[name] as (arg: unknown) => Promise<unknown>;
     return { input: parsed.data, output: await handler.call(tools, parsed.data) };
   } catch (error) {
