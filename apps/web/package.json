@@ -37,7 +37,7 @@
     "@flippy/protocol": "workspace:*",
     "@flippy/contracts": "workspace:*",
     "viem": "^2.21.0",
-    "@anthropic-ai/sdk": "^0.124.0"
+    "openai": "^7.10.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",

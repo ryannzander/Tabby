@@ -1,5 +1,5 @@
 /**
- * Spike 2 (issue #2, SPEC §8 Risk 2) — one hard-coded Claude turn, no UI.
+ * Spike 2 (issue #2, SPEC §8 Risk 2) — one hard-coded model turn, no UI.
  *
  * The agent loop is ours now, so its failure modes are ours. A model that argues
  * instead of calling the tool is a broken demo with nobody to blame, so we find that
@@ -8,7 +8,7 @@
  *
  * Run:
  *   pnpm --filter @flippy/web spike:agent
- *   pnpm --filter @flippy/web spike:agent -- --only clear --repeat 5 --effort high
+ *   pnpm --filter @flippy/web spike:agent -- --only clear --repeat 5 --effort medium
  *
  * The tool definition and the system prompt are inline on purpose. They graduate into
  * `tools.ts` / `prompt.ts` once the loop exists (SPEC §3.5); nothing in the app imports
@@ -20,7 +20,7 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
 
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { z } from "zod";
 
 import { addressSchema } from "@flippy/protocol";
@@ -33,36 +33,37 @@ const REPO_ROOT = path.resolve(WEB_ROOT, "../..");
 
 // An explicit shell export should beat a checked-out .env, but loadEnvFile overwrites,
 // so hold the shell value aside and put it back.
-const keyFromShell = process.env.ANTHROPIC_API_KEY;
+const keyFromShell = process.env.OPENAI_API_KEY;
 for (const file of [path.join(REPO_ROOT, ".env"), path.join(WEB_ROOT, ".env")]) {
   if (fs.existsSync(file)) process.loadEnvFile(file);
 }
-if (keyFromShell) process.env.ANTHROPIC_API_KEY = keyFromShell;
+if (keyFromShell) process.env.OPENAI_API_KEY = keyFromShell;
 
-if (!process.env.ANTHROPIC_API_KEY) {
+if (!process.env.OPENAI_API_KEY) {
   throw new Error(
-    "ANTHROPIC_API_KEY is not set. Put it in apps/web/.env (the checked-in value is an " +
-      "empty placeholder) or export it in your shell, then re-run.",
+    "OPENAI_API_KEY is not set. Add it to apps/web/.env and .env.example, or export it " +
+      "in your shell, then re-run.",
   );
 }
 
 /* ---- the tool under test -------------------------------------------------- */
 
-const MODEL = "claude-opus-5";
+const MODEL = "gpt-5.6-terra";
 
 /**
  * SPEC §3.5. `propose_send` only proposes — it returns a proposal id and never blocks
  * on the human, and the description says so, because a model that thinks it is sending
  * money will report success it never got.
  */
-const proposeSend = (strict: boolean): Anthropic.Tool => ({
+const PROPOSE_SEND: OpenAI.Responses.FunctionTool = {
+  type: "function",
   name: "propose_send",
   description:
     "Propose sending native currency from the wallet to an address. This does NOT send " +
     "anything. It creates a proposal, shows it on the human's Flipper Zero, and returns " +
     "a proposal id immediately. The human physically approves or rejects it on the " +
     "device; only then does the transaction execute.",
-  input_schema: {
+  parameters: {
     type: "object",
     properties: {
       to: {
@@ -75,21 +76,26 @@ const proposeSend = (strict: boolean): Anthropic.Tool => ({
           'Amount in ETH as a decimal string, for example "0.01". Never wei, never a number.',
       },
       memo: {
-        type: "string",
-        description: "Optional short note. The human reads it on the device screen.",
+        type: ["string", "null"],
+        description: "Optional short note. The human reads it on the device screen. Null if none.",
       },
     },
-    required: ["to", "amountEth"],
+    // strict mode requires every property in `required`; optional fields are expressed
+    // as a nullable type instead.
+    required: ["to", "amountEth", "memo"],
     additionalProperties: false,
   },
-  ...(strict ? { strict: true } : {}),
-});
+  strict: true,
+};
 
-/** Never string-match a serialized tool input. The SDK hands back an object; validate it. */
+/**
+ * The Responses API hands back `arguments` as a JSON *string*, so this really is a
+ * JSON.parse plus a schema check. Never string-match a serialized tool input.
+ */
 const proposeSendInput = z.object({
   to: addressSchema,
   amountEth: z.string(),
-  memo: z.string().optional(),
+  memo: z.string().nullish(),
 });
 
 /** SPEC §3.5. Deliberately contains no prompt-injection defence — see DECISIONS #10. */
@@ -166,58 +172,69 @@ interface ToolCall {
 interface RunResult {
   scenario: string;
   ms: number;
-  stopReason: string | null;
+  status: string;
   text: string;
   toolCalls: ToolCall[];
   inputTokens: number;
   outputTokens: number;
+  reasoningTokens: number;
 }
 
-const client = new Anthropic();
+const client = new OpenAI();
 
-async function runOnce(
-  scenario: Scenario,
-  effort: "low" | "medium" | "high" | "xhigh" | "max",
-  strict: boolean,
-): Promise<RunResult> {
+type Effort = "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+
+async function runOnce(scenario: Scenario, effort: Effort): Promise<RunResult> {
   const startedAt = Date.now();
-  const response = await client.messages.create({
+  // Tool calling must go through /v1/responses. GPT-5.6 rejects function tools on
+  // /v1/chat/completions unless reasoning is off entirely.
+  const response = await client.responses.create({
     model: MODEL,
-    max_tokens: 16000,
-    system: SYSTEM_PROMPT,
-    // Adaptive is the only thinking mode on Opus 5, and it is on by default. Explicit
-    // here so the spike is a readable record of what we sent.
-    thinking: { type: "adaptive" },
-    output_config: { effort },
-    tools: [proposeSend(strict)],
-    messages: [{ role: "user", content: scenario.user }],
+    instructions: SYSTEM_PROMPT,
+    input: [{ role: "user", content: scenario.user }],
+    tools: [PROPOSE_SEND],
+    reasoning: { effort },
+    max_output_tokens: 16000,
   });
   const ms = Date.now() - startedAt;
 
-  const text: string[] = [];
   const toolCalls: ToolCall[] = [];
-  for (const block of response.content) {
-    if (block.type === "text") {
-      text.push(block.text);
-    } else if (block.type === "tool_use") {
-      const parsed = proposeSendInput.safeParse(block.input);
+  for (const item of response.output) {
+    if (item.type !== "function_call") continue;
+
+    let input: unknown;
+    try {
+      input = JSON.parse(item.arguments);
+    } catch (error) {
       toolCalls.push({
-        name: block.name,
-        input: block.input,
-        valid: block.name === "propose_send" && parsed.success,
-        problem: parsed.success ? undefined : parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
+        name: item.name,
+        input: item.arguments,
+        valid: false,
+        problem: `arguments were not valid JSON: ${(error as Error).message}`,
       });
+      continue;
     }
+
+    const parsed = proposeSendInput.safeParse(input);
+    toolCalls.push({
+      name: item.name,
+      input,
+      valid: item.name === "propose_send" && parsed.success,
+      problem: parsed.success
+        ? undefined
+        : parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "),
+    });
   }
 
   return {
     scenario: scenario.id,
     ms,
-    stopReason: response.stop_reason,
-    text: text.join("\n").trim(),
+    status: response.status ?? "unknown",
+    text: response.output_text.trim(),
     toolCalls,
-    inputTokens: response.usage.input_tokens,
-    outputTokens: response.usage.output_tokens,
+    inputTokens: response.usage?.input_tokens ?? 0,
+    outputTokens: response.usage?.output_tokens ?? 0,
+    reasoningTokens: response.usage?.output_tokens_details?.reasoning_tokens ?? 0,
   };
 }
 
@@ -235,29 +252,25 @@ async function main() {
       only: { type: "string" },
       repeat: { type: "string", default: "3" },
       effort: { type: "string", default: "low" },
-      loose: { type: "boolean", default: false },
       out: { type: "string" },
     },
   });
 
-  const effort = values.effort as "low" | "medium" | "high" | "xhigh" | "max";
+  const effort = values.effort as Effort;
   const repeat = Number(values.repeat);
   if (!Number.isInteger(repeat) || repeat < 1) {
     throw new Error(`--repeat must be a positive integer, got ${values.repeat}`);
   }
 
-  const scenarios = values.only
-    ? SCENARIOS.filter((s) => s.id === values.only)
-    : SCENARIOS;
+  const scenarios = values.only ? SCENARIOS.filter((s) => s.id === values.only) : SCENARIOS;
   if (scenarios.length === 0) {
     throw new Error(
       `No scenario named "${values.only}". Known: ${SCENARIOS.map((s) => s.id).join(", ")}`,
     );
   }
 
-  const strict = !values.loose;
   console.log(
-    `model=${MODEL} effort=${effort} strict=${strict} repeat=${repeat} ` +
+    `model=${MODEL} effort=${effort} repeat=${repeat} ` +
       `scenarios=${scenarios.map((s) => s.id).join(",")}\n`,
   );
 
@@ -270,7 +283,7 @@ async function main() {
     console.log("");
 
     for (let i = 1; i <= repeat; i++) {
-      const result = await runOnce(scenario, effort, strict);
+      const result = await runOnce(scenario, effort);
       results.push(result);
 
       const calls = result.toolCalls.length
@@ -284,8 +297,9 @@ async function main() {
         : "(none)";
 
       console.log(
-        `  run ${i}/${repeat}  ${result.ms} ms  stop=${result.stopReason}  ` +
-          `tokens ${result.inputTokens}in/${result.outputTokens}out`,
+        `  run ${i}/${repeat}  ${result.ms} ms  status=${result.status}  ` +
+          `tokens ${result.inputTokens}in/${result.outputTokens}out ` +
+          `(${result.reasoningTokens} reasoning)`,
       );
       console.log(`    tools:  ${calls}`);
       if (result.text) console.log(`    text:   ${result.text.replace(/\n/g, "\n            ")}`);
@@ -298,22 +312,19 @@ async function main() {
   console.log("  scenario    runs  called propose_send  median latency");
   for (const scenario of scenarios) {
     const runs = results.filter((r) => r.scenario === scenario.id);
-    const called = runs.filter((r) =>
-      r.toolCalls.some((c) => c.name === "propose_send"),
-    ).length;
+    const called = runs.filter((r) => r.toolCalls.some((c) => c.name === "propose_send")).length;
     console.log(
       `  ${scenario.id.padEnd(11)} ${String(runs.length).padStart(4)}  ` +
         `${String(called).padStart(15)}  ${String(median(runs.map((r) => r.ms))).padStart(11)} ms`,
     );
   }
 
-  const invalid = results.flatMap((r) => r.toolCalls).filter((c) => !c.valid);
-  console.log(
-    `\n  tool inputs failing the zod schema: ${invalid.length} of ${results.flatMap((r) => r.toolCalls).length}`,
-  );
+  const allCalls = results.flatMap((r) => r.toolCalls);
+  const invalid = allCalls.filter((c) => !c.valid);
+  console.log(`\n  tool inputs failing JSON.parse or the zod schema: ${invalid.length} of ${allCalls.length}`);
 
   if (values.out) {
-    fs.writeFileSync(values.out, JSON.stringify({ model: MODEL, effort, strict, results }, null, 2));
+    fs.writeFileSync(values.out, JSON.stringify({ model: MODEL, effort, results }, null, 2));
     console.log(`\n  wrote ${values.out}`);
   }
 }

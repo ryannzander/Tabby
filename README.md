@@ -12,7 +12,7 @@ Built for ETHOnline 2026. Testnet only.
 ## How it works
 
 ```
-you → chat → Claude proposes → agent signs → Flipper shows it → you press OK
+you → chat → the agent proposes → agent signs → Flipper shows it → you press OK
                                                                        ↓
                                              human signs → FlippyGate.execute() → chain
 ```
@@ -89,7 +89,7 @@ labelled by milestone on the [issue board](https://github.com/ryannzander/Flippy
 |---|---|
 | M0 scaffold, protocol, contracts, mock signer | done |
 | M1 gate deployed on Sepolia | not started |
-| M2 chat → Claude → proposal → tx | not started |
+| M2 chat → agent → proposal → tx | not started |
 | M3 Flipper in the loop | not started |
 | M4 shop, swap, the attack scene | not started |
 | M5 Arc + Hedera + Privy | not started |

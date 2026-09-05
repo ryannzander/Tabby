@@ -15,3 +15,4 @@ say so in the group chat and change this file in the same PR as the code.
 | 8 | "What you see is what you sign" deferred to v2 | The device renders a summary the laptop sends. Honest about it in the README rather than implying otherwise. | 2026-09-04 |
 | 9 | T3 stack for the web app | Team strength, one deploy for chat + dashboard + shop, and tRPC gives the React Native client the same typed API later. | 2026-09-04 |
 | 10 | The attack scene is never cut | It is the eight seconds that make the physical step the point rather than an accessory. | 2026-09-04 |
+| 11 | The agent runs on OpenAI `gpt-5.6-terra`, not `claude-opus-5` | Token cost. Terra is $2/$12 per MTok against Opus 5's $5/$25, and the loop is mostly "pick a tool, fill in args" rather than hard reasoning. Reverses the Agent row of SPEC §5. Nothing else in the architecture is provider-specific — the loop is ours either way. | 2026-09-04 |

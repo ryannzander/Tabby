@@ -49,13 +49,13 @@ Nothing is deployed to any chain. No `.env` has real values in it yet.
 
 You own workstream B. In order:
 
-1. **Issue #2** — one hard-coded Claude turn that produces a `propose_send` tool call. One script,
-   no UI. Read the `claude-api` skill first; model ids and thinking params changed recently and
-   guessing wastes a morning. Model is `claude-opus-5`. Record the result in `docs/spikes.md`.
+1. **Issue #2** — one hard-coded model turn that produces a `propose_send` tool call. One script,
+   no UI. Model is `gpt-5.6-terra`; tool calls go through `/v1/responses`, not
+   `/v1/chat/completions`. Record the result in `docs/spikes.md`.
 2. **Issue #3** — decide where the approval channel lives. Vercel can't hold a WebSocket. The
    recommendation is in `docs/spikes.md` entry 3: the bridge polls a row and POSTs results back to
    a tRPC mutation. Boring, works, ~1s latency that nobody will notice.
-3. **Issue #6 (M2)** — chat → Claude → proposal → mock approval → transaction on Sepolia. This
+3. **Issue #6 (M2)** — chat → agent → proposal → mock approval → transaction on Sepolia. This
    needs @IGanjali to finish issue #5 (deploy) first, so start #2 and #3 while you wait.
 
 Branch as `b/<thing>`. `main` is protected: both CI checks must pass, no reviews required,

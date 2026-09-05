@@ -59,7 +59,14 @@ or en dashes to dodge it. End the sentence or use a comma.
 The skill is marked `disable-model-invocation`, so it is a standing instruction rather than
 something to invoke. `/unslop` runs it as a one-off pass over text that already exists.
 
-## When writing Anthropic API code
+## When writing agent code
 
-Use the `claude-api` skill. Model ids and the thinking/effort parameters have changed recently
-and guessing them wastes time. Default model here is `claude-opus-5`.
+The agent runs on **OpenAI**, model `gpt-5.6-terra`, via the `openai` SDK. Do not use the
+`claude-api` skill here. It emits Anthropic SDK code, which is the wrong provider for this repo.
+
+Two things that are easy to get wrong and cost a morning:
+
+- **Tool calls go through `client.responses.create`, not chat completions.** GPT-5.6 rejects
+  function tools on `/v1/chat/completions` while reasoning is on.
+- **`arguments` arrives as a JSON string**, so `JSON.parse` it and then validate. `reasoning.effort`
+  defaults to `medium`; the loop does not need that much, and it is the main cost lever.

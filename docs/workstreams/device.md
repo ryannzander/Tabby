@@ -51,7 +51,7 @@ Loop: `while(true){ if(storage.exists(INBOX)){ req=JSON.parse(read); if(req.seq>
 Install: `device/flippy-js/install.sh` copies the script to `/ext/apps/Scripts/flippy.js` via the CLI. Launch from Apps → Scripts. (Momentum may allow `loader open` of a JS script from the CLI; if so, bridge can auto-launch it on boot. Nice, not required.)
 
 ## M3 — the real demo
-Sequence: `pnpm --filter bridge dev` → prints human address → A redeploys with it → B switches the app to the external signer → Claude proposes → Flipper buzzes → OK → tx. Film it once as soon as it works; that clip is insurance.
+Sequence: `pnpm --filter bridge dev` → prints human address → A redeploys with it → B switches the app to the external signer → the agent proposes → Flipper buzzes → OK → tx. Film it once as soon as it works; that clip is insurance.
 
 ## M6 stretch — key on the device (C app)
 Only start if M5 is done. Plan, in order:

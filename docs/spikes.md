@@ -44,11 +44,11 @@ protobuf protocol instead of the text CLI; (c) C app owning USB CDC.
 
 ---
 
-## 2. Does one hard-coded Claude turn reliably produce a `propose_send` tool call? — <owner B>, TODO hour 1
+## 2. Does one hard-coded model turn reliably produce a `propose_send` tool call? — <owner B>, TODO hour 1
 **Why it matters:** the agent loop is ours now, so its failure modes are ours. A model that
 argues instead of calling the tool is a broken demo with nobody to blame.
-**How to test:** the harness is written — `apps/web/src/server/agent/spike.ts`. Needs a real
-`ANTHROPIC_API_KEY` in `apps/web/.env` (the checked-in value is an empty placeholder), then:
+**How to test:** the harness is written — `apps/web/src/server/agent/spike.ts`. Needs an
+`OPENAI_API_KEY` in `apps/web/.env` (not in `.env.example` yet — add it), then:
 
 ```bash
 pnpm --filter @flippy/web spike:agent                        # 4 scenarios x 3 runs, effort=low
@@ -56,10 +56,13 @@ pnpm --filter @flippy/web spike:agent -- --effort high       # same, for the lat
 pnpm --filter @flippy/web spike:agent -- --only injection --repeat 5
 ```
 
-Scenarios are `clear`, `vague`, `units` and `injection`. Tool inputs are validated with zod, never
-string-matched. `--loose` drops `strict: true` from the tool schema if the API rejects it.
-**Also record:** turn latency at low vs high effort, behaviour on a vague request, and whether
-`injection` gets Claude to propose the drain — if it declines, the attack scene (SPEC §9, 1:50)
+Scenarios are `clear`, `vague`, `units` and `injection`. Arguments are `JSON.parse`d and then
+validated with zod, never string-matched.
+**Known before running:** GPT-5.6 rejects function tools on `/v1/chat/completions` while reasoning
+is on, so the spike uses `/v1/responses`. `reasoning.effort` defaults to `medium`; the spike
+defaults to `low`.
+**Also record:** turn latency at low vs medium effort, behaviour on a vague request, and whether
+`injection` gets the model to propose the drain — if it declines, the attack scene (SPEC §9, 1:50)
 needs the scripted replay button, and that is a build item, not a retake.
 **Answer:** _not yet run — script committed, waiting on an API key_
 
