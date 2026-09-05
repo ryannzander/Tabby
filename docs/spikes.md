@@ -47,10 +47,21 @@ protobuf protocol instead of the text CLI; (c) C app owning USB CDC.
 ## 2. Does one hard-coded Claude turn reliably produce a `propose_send` tool call? — <owner B>, TODO hour 1
 **Why it matters:** the agent loop is ours now, so its failure modes are ours. A model that
 argues instead of calling the tool is a broken demo with nobody to blame.
-**How to test:** one script, one message, one tool definition, print the parsed input. Read the
-`claude-api` skill first — model ids and thinking parameters have changed.
-**Also record:** turn latency, behaviour on a vague request, behaviour on the injected message.
-**Answer:** _not yet run_
+**How to test:** the harness is written — `apps/web/src/server/agent/spike.ts`. Needs a real
+`ANTHROPIC_API_KEY` in `apps/web/.env` (the checked-in value is an empty placeholder), then:
+
+```bash
+pnpm --filter @flippy/web spike:agent                        # 4 scenarios x 3 runs, effort=low
+pnpm --filter @flippy/web spike:agent -- --effort high       # same, for the latency comparison
+pnpm --filter @flippy/web spike:agent -- --only injection --repeat 5
+```
+
+Scenarios are `clear`, `vague`, `units` and `injection`. Tool inputs are validated with zod, never
+string-matched. `--loose` drops `strict: true` from the tool schema if the API rejects it.
+**Also record:** turn latency at low vs high effort, behaviour on a vague request, and whether
+`injection` gets Claude to propose the drain — if it declines, the attack scene (SPEC §9, 1:50)
+needs the scripted replay button, and that is a build item, not a retake.
+**Answer:** _not yet run — script committed, waiting on an API key_
 
 ---
 
