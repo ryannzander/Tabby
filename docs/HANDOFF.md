@@ -1,8 +1,9 @@
 # Handoff — picking this up on another machine
 
-Written 2026-09-04. Updated 2026-09-05 at the end of Ryan's second working session.
-`main` is at `c2a0b4d`. The session's work is on `b/proposal-store`, which is pushed and not
-merged. Read "What happened in session 2" before you branch off anything.
+Written 2026-09-04. Updated 2026-09-05 at the end of Ryan's third working session.
+`b/proposal-store` is merged, so `main` now has the store, the state machine and the agent loop.
+The session's own work is on `b/chat-send`, pushed and not merged. Read "What happened in session
+3" before you branch off anything.
 
 ## Get running
 
@@ -23,7 +24,7 @@ guessing.
 ```bash
 pnpm contracts:test                    # 13 tests
 pnpm --filter @tappy/protocol test    # 8 tests
-pnpm --filter @tappy/web test         # 29 tests, on b/proposal-store
+pnpm --filter @tappy/web test         # 39 tests, on b/chat-send
 pnpm typecheck
 ```
 
@@ -38,7 +39,7 @@ suite too. That is a PATH problem, not a broken test.
 | `packages/contracts` | **Working.** `TappyGate` + mocks, 13 tests, deploy script, ABI export. Not deployed anywhere yet. |
 | `apps/bridge` | **Written, never run against hardware.** Serial CLI client and `FlipperHumanSigner` compile and typecheck. Untested on a real Flipper. |
 | `device/tappy-js` | **Written, never run.** Same caveat. |
-| `apps/web` server | **Half built, on `b/proposal-store`.** Approval channel, proposal store, agent loop. No UI and no tRPC procedure calls any of it. |
+| `apps/web` server | **Most of the way, `chat.send` on `b/chat-send`.** Approval channel, proposal store, agent loop, chat. The tools are the hole: they need a deploy. |
 | `apps/web` UI | **T3 scaffold only.** The default landing page. Nothing has been designed. |
 | `apps/mobile`, `device/tappy-c` | READMEs only. Deliberately not started. |
 
@@ -92,17 +93,39 @@ the old list. 29 vitest cases in `apps/web` and a `verify:store` run against the
   built its `abis` map from identifiers that do not exist, which typechecked only because nothing
   imported it. Fixed in the generator too, so `forge build` does not undo it.
 
+## What happened in session 3
+
+One fix, one merge, one branch. `main` gained everything session 2 wrote. `apps/web` is at 39
+vitest cases.
+
+- **The round-trip cap did not cap the requests.** `MAX_TOOL_ROUND_TRIPS` limited the tools that
+  ran, but once the budget was spent the loop answered every pending call with "stop calling
+  tools" and went round again, so a model that kept asking kept billing and the turn never
+  returned. It now forces one final request with `tool_choice: "none"` and ends there. The old
+  test hid it by letting the scripted model give up on its own; the new one never stops asking.
+- **`b/proposal-store` is merged**, PR #13, both checks green.
+- **`chat.send` and `chat.history` exist**, on `b/chat-send`. There is a `messages` table and
+  migration `0001`.
+- **The transcript and the model's history share a row.** `text` is what the human reads, `items`
+  is the raw Responses output. Split across two tables they could disagree, and a model that saw a
+  different conversation from the one on screen produces symptoms that all read as the model being
+  stupid.
+- **The user's row is written before the turn runs, not with the reply.** A turn can fail after
+  the model has already written a proposal, and a proposal that no message in the transcript asked
+  for is worse than a dangling user row.
+- **`agentToolsFromEnv` throws.** `ChainReader` and `ShopReader` still have no implementation, so
+  `chat.send` fails on the tools by name rather than running the model with none of them.
+
 ## Your next three moves
 
 You own workstream B. In order:
 
-1. **`chat.send`.** Nothing calls `runAgentTurn` yet. A tRPC procedure that runs a turn, stores the
-   messages and returns the reply. It needs `OPENAI_API_KEY` and `AGENT_PRIVATE_KEY` in
-   `apps/web/.env`, and neither is set. Message persistence does not exist either: `db/schema.ts`
-   has `proposals` and `signer_sessions`, no `messages`.
-2. **`ChainReader` and `ShopReader`.** Both are interfaces in `src/server/agent/handlers.ts` with
-   no implementation, because nothing is deployed. `ChainReader` is one viem client and unblocks
-   `propose_send` and `propose_swap` end to end. Needs @IGanjali's deploy, issue #5.
+1. **Apply migration `0001` and run `pnpm --filter @tappy/web verify:chat`.** The migration has
+   never been applied to Supabase and the verify script has never been run, because the machine
+   session 3 ran on had no Postgres and no `.env`. The script uses a scripted model, so it needs
+   no `OPENAI_API_KEY`. Do this before building anything on top of the chat.
+2. **`ChainReader` and `ShopReader`.** The only thing standing between `chat.send` and a working
+   turn. `ChainReader` is one viem client. Needs @IGanjali's deploy, issue #5.
 3. **Issue #2**, still open. `spike.ts` has never run. One command once the key is set, then fill
    in `docs/spikes.md` entry 2. Do this before trusting the loop on stage.
 
@@ -131,11 +154,13 @@ self-merge after 30 minutes if nobody looks.
 - **A failing tool goes back to the model as a result, not an exception.** "No approval device
   connected" is something the user has to be told; a throw ends the turn in silence. This is the
   one place where a loud error means returning it, not raising it.
+- **A budget that only limits the tools does not limit the bill.** Telling a model to stop and
+  then asking it again is a loop. Whatever stops it has to be the request, not the instruction.
 
 ## Decide this before you write more code
 
-**`b/proposal-store` is pushed and not merged.** Two commits, both green. Review it and merge, or
-say what should change. Everything in the next three moves builds on it.
+**`b/chat-send` is pushed and not merged.** One commit, green. `verify:chat` in it has never run
+against a database, so run that before merging rather than after.
 
 **Add these to `apps/web/.env` and `.env.example`.** Nothing outside the pure tests runs without
 them, and the example file was not updated because it sits outside Claude's write permissions.
@@ -149,10 +174,10 @@ OPENAI_API_KEY=
 **Rotate the Supabase password.** It was pasted into a chat transcript in session 1. Reset it in
 the Supabase dashboard and replace the one line in `apps/web/.env`. Still not done.
 
-**Claude ran in bypass permissions mode in both sessions.** In session 1 that is why it pushed to
-`main`, merged its own PR and built a UI nobody asked for the shape of. Session 2 stayed on a
-branch and asked before deleting anything, but nothing enforces that. Pick one: plan mode
-(Shift+Tab), or a `permissions.deny` on pushing to `main` in `.claude/settings.json`.
+**Claude ran in bypass permissions mode in all three sessions.** In session 1 that is why it pushed
+to `main`, merged its own PR and built a UI nobody asked for the shape of. Sessions 2 and 3 stayed
+on branches and asked before merging or deleting anything, but nothing enforces that. Pick one:
+plan mode (Shift+Tab), or a `permissions.deny` on pushing to `main` in `.claude/settings.json`.
 
 **Open product question, unanswered since session 1:** whether the agent only proposes transactions
 from the wallet (what the SPEC says today) or also writes and deploys new contracts (what Ryan said
