@@ -4,6 +4,23 @@
  * Thin on purpose: `send` builds the model client and the tools, and `~/server/agent/chat` does
  * the rest. That split is what lets a verify script drive the same turn against the real database
  * with a scripted model.
+ *
+ * BOTH PROCEDURES ARE UNAUTHENTICATED, AND THIS IS NOT SAFE TO DEPLOY AS IT STANDS.
+ *
+ * There is no auth anywhere in this app yet, so these are `publicProcedure` like everything else.
+ * On a public URL that means anyone who finds it can read the whole conversation and write into
+ * it. Nothing can move money without the human's press, which is the point of the design, but
+ * three things still break:
+ *
+ * - a stranger spends the OpenAI budget and makes the Flipper buzz during the demo;
+ * - one stranger proposal sits at PENDING_HUMAN and `insertProposal` refuses a second, so the real
+ *   one is locked out for ten minutes;
+ * - the transcript is one global conversation, so a stranger's text is in the history the model
+ *   reads on the operator's next turn.
+ *
+ * This is not covered by DECISIONS #10. That rule is about the agent's tools, where the human's
+ * thumb is the defence. `trpc.ts` already draws the same line for the bridge. Decide what guards
+ * this before the app is deployed anywhere, at the same time as deciding the UI's shape.
  */
 
 import { z } from "zod";

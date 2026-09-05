@@ -159,8 +159,18 @@ self-merge after 30 minutes if nobody looks.
 
 ## Decide this before you write more code
 
-**`b/chat-send` is pushed and not merged.** One commit, green. `verify:chat` in it has never run
-against a database, so run that before merging rather than after.
+**`b/chat-send` is pushed and not merged.** Green. `verify:chat` in it has never run against a
+database, so run that before merging rather than after.
+
+**`chat.send` and `chat.history` are unauthenticated, and the app cannot be deployed until that is
+answered.** There is no auth anywhere in `apps/web`, no `middleware.ts`, and these are
+`publicProcedure` like the rest. Nothing can move money without the human's press, but on a public
+URL a stranger can spend the OpenAI budget, make the Flipper buzz mid-demo, lock out the real
+proposal for ten minutes by leaving one at `PENDING_HUMAN`, and write into the single global
+transcript the model reads on the operator's next turn. This is not covered by DECISIONS #10,
+which is about the agent's tools; `trpc.ts` already draws the same line for the bridge. Claude did
+not pick a scheme for it, because the answer shapes how the UI talks to the server and that is
+yours to decide.
 
 **Add these to `apps/web/.env` and `.env.example`.** Nothing outside the pure tests runs without
 them, and the example file was not updated because it sits outside Claude's write permissions.
