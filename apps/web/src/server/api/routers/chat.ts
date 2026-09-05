@@ -26,7 +26,7 @@
 import { z } from "zod";
 
 import { chatHistory, sendChatTurn } from "~/server/agent/chat";
-import { agentToolsFromEnv, openaiFromEnv } from "~/server/agent/context";
+import { agentToolsFromEnv, isMockMode, modelClientFromEnv } from "~/server/agent/context";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 /** Long enough for a real request, short enough that a paste cannot run up a bill. */
@@ -34,6 +34,13 @@ export const MAX_MESSAGE_CHARS = 2000;
 
 export const chatRouter = createTRPCRouter({
   history: publicProcedure.query(({ ctx }) => chatHistory(ctx.db)),
+
+  /**
+   * Whether anything in this process is real. The UI puts a banner up when it is not, because a
+   * screenshot of the mock and a screenshot of the real thing are otherwise identical, and one of
+   * them is a made-up balance.
+   */
+  mode: publicProcedure.query(() => ({ mock: isMockMode() })),
 
   /**
    * One message in, one reply out. It does not wait for the human: a `propose_*` tool returns as
@@ -47,8 +54,8 @@ export const chatRouter = createTRPCRouter({
     .input(z.object({ text: z.string().trim().min(1).max(MAX_MESSAGE_CHARS) }))
     .mutation(({ ctx, input }) =>
       sendChatTurn(ctx.db, input.text, {
-        client: openaiFromEnv(),
-        tools: agentToolsFromEnv(),
+        client: modelClientFromEnv(),
+        tools: agentToolsFromEnv(ctx.db),
       }),
     ),
 });

@@ -33,6 +33,13 @@ export const env = createEnv({
      * pure tests run; `chat.send` refuses by name when it is missing.
      */
     OPENAI_API_KEY: z.string().min(1).optional(),
+    /**
+     * `mock` replaces the model, the chain and the device with the stand-ins in
+     * `server/agent/mock.ts`, so the app runs with no deploy, no Flipper and no API budget.
+     * Defaults to `live` on purpose: a machine that is supposed to be talking to a real chain
+     * should fail loudly rather than quietly invent a balance.
+     */
+    AGENT_MODE: z.enum(["live", "mock"]).default("live"),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -58,6 +65,7 @@ export const env = createEnv({
     AGENT_SIGNER: process.env.AGENT_SIGNER,
     AGENT_PRIVATE_KEY: process.env.AGENT_PRIVATE_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    AGENT_MODE: process.env.AGENT_MODE,
     NODE_ENV: process.env.NODE_ENV,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
