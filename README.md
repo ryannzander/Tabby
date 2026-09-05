@@ -75,6 +75,7 @@ labelled by milestone on the [issue board](https://github.com/ryannzander/Flippy
 
 ## Where to start reading
 
+0. [`docs/HANDOFF.md`](docs/HANDOFF.md) — if you're picking this up on a new machine, start here.
 1. [`docs/SPEC.md`](docs/SPEC.md) — architecture, contract design, milestones, cut lines, demo script.
 2. Your brief: [`contracts`](docs/workstreams/contracts.md) · [`app`](docs/workstreams/app.md) · [`device`](docs/workstreams/device.md)
 3. [`CONTRIBUTING.md`](CONTRIBUTING.md) — branches, PRs, and the rules that keep three people out of each other's way.
