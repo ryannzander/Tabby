@@ -7,8 +7,12 @@ import { index, pgTableCreator, uniqueIndex } from "drizzle-orm/pg-core";
 import type OpenAI from "openai";
 import type { z } from "zod";
 
-import { actionSchema } from "@tappy/protocol";
-import type { ProposalStatus, ProposalView, SignerKind } from "@tappy/protocol";
+import type {
+  ProposalStatus,
+  ProposalView,
+  SignerKind,
+  actionSchema,
+} from "@tappy/protocol";
 
 import type { ToolInvocation } from "~/server/agent/loop";
 

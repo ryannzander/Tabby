@@ -31,5 +31,17 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: protocol tests
         run: pnpm --filter @tappy/protocol test
+      - name: web tests
+        run: pnpm --filter @tappy/web test
       - name: typecheck
         run: pnpm typecheck
+      - name: lint
+        run: pnpm --filter @tappy/web lint
+      # The build is the only check that resolves modules the way Vercel will. Turbopack serves
+      # `dev` and is more forgiving, so a broken production build is otherwise invisible until a
+      # deploy fails. No real database is reached: nothing is prerendered.
+      - name: build
+        run: pnpm --filter @tappy/web build
+        env:
+          SKIP_ENV_VALIDATION: "1"
+          DATABASE_URL: postgres://ci:ci@localhost:5432/ci

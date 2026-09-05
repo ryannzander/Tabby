@@ -46,6 +46,17 @@ export default tseslint.config(
   },
   },
   {
+    // Two rules that only fire on test doubles. `unbound-method` flags every
+    // `expect(tools.propose_send)`, because passing a method without binding it is normally a bug
+    // and here it is the assertion. `no-unsafe-argument` flags the casts that build fake API
+    // responses, which are deliberately not the real shape.
+    files: ['**/*.test.ts', '**/*.test.tsx'],
+    rules: {
+      "@typescript-eslint/unbound-method": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+    },
+  },
+  {
 		linterOptions: {
 			reportUnusedDisableDirectives: true
 		},

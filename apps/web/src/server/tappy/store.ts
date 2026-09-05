@@ -162,6 +162,34 @@ export async function pendingProposal(db: Db): Promise<Proposal | undefined> {
 }
 
 /**
+ * A proposal and the exact view the device was given for it.
+ *
+ * The screen shows the stored `view` rather than deriving its own from the action. The device and
+ * the human have to be reading the same words: a screen that renders "0.01 to Alice" while the
+ * Flipper renders something else is the one failure this design exists to prevent.
+ */
+export interface ProposalWithView {
+  proposal: Proposal;
+  view: ProposalView;
+}
+
+export async function pendingProposalWithView(db: Db): Promise<ProposalWithView | undefined> {
+  const row = await db.query.proposals.findFirst({
+    where: eq(proposals.status, "PENDING_HUMAN"),
+  });
+  return row ? { proposal: rowToProposal(row), view: row.view } : undefined;
+}
+
+export async function listProposalsWithView(db: Db, limit = 20): Promise<ProposalWithView[]> {
+  const rows = await db
+    .select()
+    .from(proposals)
+    .orderBy(desc(proposals.createdAt))
+    .limit(limit);
+  return rows.map((row) => ({ proposal: rowToProposal(row), view: row.view }));
+}
+
+/**
  * Writes a new `PENDING_HUMAN` proposal.
  *
  * Refuses while another is pending and hands back the pending one, because the caller's next move

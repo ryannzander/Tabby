@@ -1,6 +1,79 @@
 @import "tailwindcss";
 
+/**
+ * The palette is the Flipper's own amber-backlit LCD, read the way the device actually looks:
+ * dark pixels on a lit orange field, not light text on black. The page around it is a greyed
+ * manila so the device panel is the only saturated thing on screen.
+ */
 @theme {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+  --font-pixel: var(--font-silkscreen), var(--font-archivo), sans-serif;
+
+  --color-paper: #e8e4d9;
+  --color-paper-deep: #dcd7c9;
+  --color-ink: #1f1b16;
+  --color-ink-soft: #6b6353;
+  --color-rule: #b9b3a3;
+
+  --color-amber: #ff7a00;
+  --color-backlight: #ffa22e;
+
+  --color-confirmed: #2f6b3f;
+  --color-refused: #9c2f2f;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+body {
+  font-family: var(--font-sans);
+  /* Optical sizing off by default reads as flat at display sizes. */
+  text-rendering: optimizeLegibility;
+}
+
+/**
+ * The device panel. Dark ink on a lit amber field, with a scanline texture at low opacity so it
+ * reads as a screen rather than as an orange box. Kept here rather than inline because the
+ * gradient repeats and a Tailwind arbitrary value for it would be unreadable.
+ */
+.lcd {
+  background-color: var(--color-backlight);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(31, 27, 22, 0.09) 0px,
+    rgba(31, 27, 22, 0.09) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  color: var(--color-ink);
+}
+
+/* The one piece of motion: the pending indicator, because something really is waiting. */
+@keyframes blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0.15;
+  }
+}
+
+.blink {
+  animation: blink 1.4s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blink {
+    animation: none;
+  }
+}
+
+:where(a, button, input, textarea):focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
 }
