@@ -8,6 +8,17 @@ export const env = createEnv({
    */
   server: {
     DATABASE_URL: z.string().url(),
+    /**
+     * Shared secret the bridge sends on every approval-channel call. Optional in the schema so a
+     * fresh clone still boots, but `bridgeProcedure` rejects every request while it is unset.
+     * Fail closed: an unauthenticated approval channel on a public URL is worse than a dead one.
+     */
+    BRIDGE_TOKEN: z.string().min(16).optional(),
+    /** The address the human key signs with. `approvals.submit` recovers against it. */
+    HUMAN_ADDRESS: z
+      .string()
+      .regex(/^0x[0-9a-fA-F]{40}$/)
+      .optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -28,6 +39,8 @@ export const env = createEnv({
    */
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
+    BRIDGE_TOKEN: process.env.BRIDGE_TOKEN,
+    HUMAN_ADDRESS: process.env.HUMAN_ADDRESS,
     NODE_ENV: process.env.NODE_ENV,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },

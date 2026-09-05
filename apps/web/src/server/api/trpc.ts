@@ -6,11 +6,14 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { timingSafeEqual } from "node:crypto";
+
+import { TRPCError, initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { db } from "~/server/db";
+import { env } from "~/env";
 
 /**
  * 1. CONTEXT
@@ -104,3 +107,38 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+/**
+ * Bridge (approval channel) procedure.
+ *
+ * The approval channel is a set of ordinary HTTPS endpoints on a public Vercel URL, so anyone who
+ * finds them can call them unless we check something. A shared secret is the whole check: the
+ * bridge is one process we configure by hand, not a user with an account.
+ *
+ * Fail closed. With `BRIDGE_TOKEN` unset every call is rejected, because an open `approvals.submit`
+ * lets a stranger reject proposals the human never saw.
+ *
+ * This is not a contradiction of DECISIONS #10. That rule says do not put injection defences in the
+ * agent's tools, because the human's thumb is the defence. It says nothing about leaving the
+ * device's own API unauthenticated.
+ */
+const bridgeMiddleware = t.middleware(async ({ ctx, next }) => {
+  if (!env.BRIDGE_TOKEN) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "BRIDGE_TOKEN is not set on the server, so the approval channel is closed.",
+    });
+  }
+
+  const presented = ctx.headers.get("x-flippy-bridge-token") ?? "";
+  const expected = env.BRIDGE_TOKEN;
+  const a = Buffer.from(presented);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Bad or missing bridge token." });
+  }
+
+  return next();
+});
+
+export const bridgeProcedure = t.procedure.use(timingMiddleware).use(bridgeMiddleware);

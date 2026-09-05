@@ -101,11 +101,20 @@ nothing expires on its own.
 counts as connected for 2 s after its last poll. A bridge that dies goes stale by itself. There is
 no disconnect message to miss.
 
+**Consequence 4 — the channel needs its own auth.** A socket the bridge dials into is at least a
+connection we accept once. Four HTTP endpoints on a public Vercel URL are reachable by anyone who
+finds them. So the bridge sends `x-flippy-bridge-token`, and the channel refuses everything while
+`BRIDGE_TOKEN` is unset. `approvals.submit` also recovers `humanSig` against `HUMAN_ADDRESS`,
+because a token in a laptop `.env` is a weaker secret than a signature. Without that check a leaked
+token moves a proposal out of `PENDING_HUMAN` and the real press has nowhere to land. This is not
+in tension with DECISIONS #10: that rule is about the agent's tools, not the device's API.
+
 **Cost:** up to 500 ms before the Flipper buzzes, plus one relayer tick after the press. Against a
 human reaching for a button and 12 to 30 s of Sepolia inclusion, nobody will see it.
 
 **Not done yet:** no migration has been generated or run. There is no `DATABASE_URL`, so none of
-this has touched a real Postgres.
+this has touched a real Postgres. `BRIDGE_TOKEN` and `HUMAN_ADDRESS` are not in `.env.example` yet
+and both need to be, or the channel stays shut.
 
 ---
 

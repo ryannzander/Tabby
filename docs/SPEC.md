@@ -181,6 +181,8 @@ signer → hub   approvals.next    { address }            // every 500 ms; retur
 signer → hub   approvals.submit  { decision: Decision }
 ```
 
+All three require the header `x-flippy-bridge-token: $BRIDGE_TOKEN`. These are ordinary HTTPS endpoints on a public Vercel URL, so without it a stranger can reject a proposal the human never saw. With `BRIDGE_TOKEN` unset the channel refuses everything rather than opening. `approvals.submit` additionally recovers `humanSig` against `HUMAN_ADDRESS` and rejects a mismatch, so a leaked token still cannot approve anything.
+
 Exactly one signer may be connected; `hello` rejects a second address. Polling is the heartbeat, so a signer counts as connected for 2 s after its last `next`. hub with no signer connected fails `propose_*` immediately (so a missing bridge is loud, not silent). Expiry replaces `approval.cancel`: the relayer calls `approvals.expireStale`. See `docs/spikes.md` entry 3.
 
 ### 3.5 Agent tools (function-tool definitions, `apps/web/src/server/agent/tools.ts`)
