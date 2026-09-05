@@ -5,7 +5,7 @@ import { chainByKey, type ChainInfo } from "./chains.js";
 
 /**
  * The one hash the agent, the human and the contract all sign over.
- * If this disagrees with FlippyGate.digestOf(), every execute() reverts.
+ * If this disagrees with TappyGate.digestOf(), every execute() reverts.
  * Guarded by the shared vector in vectors/execute.json.
  */
 export const EXECUTE_TYPES = {
@@ -19,7 +19,7 @@ export const EXECUTE_TYPES = {
 } as const;
 
 export function domain(chainId: number, gate: Address): TypedDataDomain {
-  return { name: "FlippyGate", version: "1", chainId, verifyingContract: gate };
+  return { name: "TappyGate", version: "1", chainId, verifyingContract: gate };
 }
 
 export interface DigestInput {

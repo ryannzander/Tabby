@@ -1,4 +1,4 @@
-# device/flippy-js — the Flipper app (v1)
+# device/tappy-js — the Flipper app (v1)
 
 The Flipper is the physical approval factor. This app shows a proposal and returns the
 human's decision. It holds no key: the bridge signs once the device says yes.
@@ -7,18 +7,18 @@ human's decision. It holds no key: the bridge signs once the device says yes.
 
 The Flipper's JS engine (mJS) has no crypto, no bigint and no USB access — so it cannot
 produce a secp256k1 signature. It *can* draw a dialog and read/write the SD card, which is
-all v1 needs. On-device signing is a C app; see `../flippy-c/README.md` and SPEC §1.
+all v1 needs. On-device signing is a C app; see `../tappy-c/README.md` and SPEC §1.
 
 ## Protocol
 
-The bridge writes `/ext/apps_data/flippy/inbox.json`:
+The bridge writes `/ext/apps_data/tappy/inbox.json`:
 
 ```json
 { "id": "0x…", "short": "0x1a2b…9f0e", "action": "SEND",
   "amount": "0.010 ETH", "counterparty": "0xAb12…F9e3", "chain": "Sepolia", "seq": 1 }
 ```
 
-This app writes `/ext/apps_data/flippy/outbox.json`:
+This app writes `/ext/apps_data/tappy/outbox.json`:
 
 ```json
 { "id": "0x…", "seq": 1, "approved": true, "at": 1757000000000 }
@@ -30,10 +30,10 @@ a stale inbox can never be re-approved.
 ## Install and run
 
 ```bash
-pnpm --filter @flippy/bridge flipper:install   # copies this file to /ext/apps/Scripts/
+pnpm --filter @tappy/bridge flipper:install   # copies this file to /ext/apps/Scripts/
 ```
 
-Then on the device: `Apps -> Scripts -> flippy.js`.
+Then on the device: `Apps -> Scripts -> tappy.js`.
 
 ## Before writing any more code: Spike 1
 

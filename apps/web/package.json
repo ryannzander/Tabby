@@ -1,5 +1,5 @@
 {
-  "name": "@flippy/web",
+  "name": "@tappy/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -34,8 +34,8 @@
     "server-only": "^0.0.1",
     "superjson": "^2.2.1",
     "zod": "^3.24.2",
-    "@flippy/protocol": "workspace:*",
-    "@flippy/contracts": "workspace:*",
+    "@tappy/protocol": "workspace:*",
+    "@tappy/contracts": "workspace:*",
     "viem": "^2.21.0",
     "openai": "^7.10.0"
   },

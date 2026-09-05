@@ -1,5 +1,5 @@
 {
-  "name": "flippy",
+  "name": "tappy",
   "private": true,
   "packageManager": "pnpm@11.25.0",
   "engines": {
@@ -12,8 +12,8 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\" --ignore-path .gitignore",
-    "contracts:test": "pnpm --filter @flippy/contracts test",
-    "contracts:build": "pnpm --filter @flippy/contracts build"
+    "contracts:test": "pnpm --filter @tappy/contracts test",
+    "contracts:build": "pnpm --filter @tappy/contracts build"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

@@ -4,7 +4,7 @@
 import { sql } from "drizzle-orm";
 import { index, pgTableCreator, uniqueIndex } from "drizzle-orm/pg-core";
 
-import type { Action, ProposalStatus, ProposalView, SignerKind } from "@flippy/protocol";
+import type { Action, ProposalStatus, ProposalView, SignerKind } from "@tappy/protocol";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same

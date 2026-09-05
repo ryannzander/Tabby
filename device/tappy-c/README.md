@@ -1,4 +1,4 @@
-# device/flippy-c — on-device signing (M6 stretch, not started)
+# device/tappy-c — on-device signing (M6 stretch, not started)
 
 **Do not start this until M5 is done.** It is cut line #1.
 
@@ -23,13 +23,13 @@ between a presence factor and a hardware wallet, and it is the strongest version
 ## Plan, in order, with a stop rule at every step
 
 1. `pip install ufbt`; point it at **Momentum's** SDK (the device runs Momentum, and an app's
-   major API version must match). `ufbt create APPID=flippy`, then `ufbt launch` a hello world.
+   major API version must match). `ufbt create APPID=tappy`, then `ufbt launch` a hello world.
    **Stop rule: if this is not on the device within 2 hours, abandon M6 and keep v1.**
 2. Vendor the trezor-crypto subset from FlipBIP (`secp256k1`, `ecdsa`, `sha3`, `hasher`, `rand`,
    `memzero`, `bignum`) as `fap_private_libs`. RAM is the risk here — FlipBIP's README warns it
    already runs near the limit. Strip everything not needed for signing.
 3. Key generation: `furi_hal_random_fill_buf` 32 bytes on first run, store at
-   `/ext/apps_data/flippy/key.bin`, derive the address (keccak of the pubkey) and show it.
+   `/ext/apps_data/tappy/key.bin`, derive the address (keccak of the pubkey) and show it.
 4. USB CDC channel (`usb_cdc_dual`, app on channel 1) with a one-line protocol:
    `REQ <json>` -> screen -> OK -> `ecdsa_sign_digest(&secp256k1, key, digest32, sig, &recid, NULL)`
    -> `SIG <r||s||v>`; Back -> `REJ`. Copy the pattern from the firmware's `usb_uart_bridge.c`.

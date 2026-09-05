@@ -10,7 +10,7 @@ Everything lives in `apps/web` (T3: Next.js 15 App Router, tRPC v11, Drizzle, Ta
 1. Chat UI + the agent tool-calling loop that produces proposals.
 2. Wallet panel: balances, both keys, signer status, live proposal list.
 3. Approval channel: tRPC procedures the bridge polls. Decided, see `../spikes.md` entry 3.
-4. Relayer: submits `FlippyGate.execute` once both signatures exist.
+4. Relayer: submits `TappyGate.execute` once both signatures exist.
 5. Mock shop route with an item whose description carries the injection (the attack scene).
 
 ## Hour 1 — Spike 2: one model turn, no UI
@@ -39,10 +39,10 @@ src/
       loop.ts             OpenAI SDK tool-calling loop, max 6 round trips
       tools.ts            tool definitions (SPEC §3.5)
       prompt.ts           system prompt
-    flippy/
+    tappy/
       store.ts            proposal persistence + transition(from,to) that throws on illegal moves
       proposals.ts        buildProposal(action): reads nonce from chain, deadline = now + 600,
-                          digest via @flippy/protocol, agent signature
+                          digest via @tappy/protocol, agent signature
       agentSigner.ts      interface { address(); signDigest() }: PrivyAgentSigner | LocalAgentSigner
       approvals.ts        hello / next / submit, the polled channel the bridge calls
       relayer.ts          viem writeContract + receipt -> SUBMITTED/EXECUTED/FAILED
@@ -50,22 +50,22 @@ src/
 ```
 
 **Approval channel: decided.** Option (a). The bridge polls `approvals.next` every 500 ms and
-posts the result to `approvals.submit`. There is no WebSocket, and `@flippy/protocol` did not
+posts the result to `approvals.submit`. There is no WebSocket, and `@tappy/protocol` did not
 change. Full reasoning and the consequences that are not obvious are in `docs/spikes.md` entry 3.
 The one to remember: nothing on the hub ever waits for the human. `propose_*` writes the row and
 returns.
 
 ## Rules
 - Every status change goes through `store.transition(id, from, to)` and throws on an illegal move.
-  An illegal transition is a bug, not a log line. `ALLOWED_TRANSITIONS` is in `@flippy/protocol`.
-- On boot, call `FlippyGate.digestOf(...)` with the frozen vector and compare against
+  An illegal transition is a bug, not a log line. `ALLOWED_TRANSITIONS` is in `@tappy/protocol`.
+- On boot, call `TappyGate.digestOf(...)` with the frozen vector and compare against
   `proposalDigest()`. Refuse to start on mismatch. This is the Risk #3 guard.
 - Refuse a new proposal while one is `PENDING_HUMAN` — the nonce would collide. Return the
   pending one instead.
 - If no signer is connected, `propose_*` fails loudly with "no approval device connected".
   Never queue silently.
-- Never copy an ABI. Import from `@flippy/contracts`.
-- Never redefine a protocol type. Import from `@flippy/protocol`.
+- Never copy an ABI. Import from `@tappy/contracts`.
+- Never redefine a protocol type. Import from `@tappy/protocol`.
 
 ## Privy
 `@privy-io/server-auth` → `walletApi.ethereum.signTypedData({ walletId, typedData })` behind

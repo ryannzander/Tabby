@@ -20,7 +20,7 @@ guessing.
 
 ```bash
 pnpm contracts:test                    # 13 tests
-pnpm --filter @flippy/protocol test    # 8 tests
+pnpm --filter @tappy/protocol test    # 8 tests
 pnpm typecheck
 ```
 
@@ -29,11 +29,11 @@ pnpm typecheck
 | | State |
 |---|---|
 | `packages/protocol` | **Working.** Types, EIP-712 digest, `HumanSigner`, `MockHumanSigner`, frozen vector. |
-| `packages/contracts` | **Working.** `FlippyGate` + mocks, 13 tests, deploy script, ABI export. Not deployed anywhere yet. |
+| `packages/contracts` | **Working.** `TappyGate` + mocks, 13 tests, deploy script, ABI export. Not deployed anywhere yet. |
 | `apps/bridge` | **Written, never run against hardware.** Serial CLI client and `FlipperHumanSigner` compile and typecheck. Untested on a real Flipper. |
-| `device/flippy-js` | **Written, never run.** Same caveat. |
-| `apps/web` | **T3 scaffold only.** `src/server/agent/` and `src/server/flippy/` hold READMEs describing what goes there, not code. |
-| `apps/mobile`, `device/flippy-c` | READMEs only. Deliberately not started. |
+| `device/tappy-js` | **Written, never run.** Same caveat. |
+| `apps/web` | **T3 scaffold only.** `src/server/agent/` and `src/server/tappy/` hold READMEs describing what goes there, not code. |
+| `apps/mobile`, `device/tappy-c` | READMEs only. Deliberately not started. |
 
 Nothing is deployed to any chain. No `.env` has real values in it yet.
 
@@ -65,15 +65,21 @@ self-merge after 30 minutes if nobody looks.
 - **Never edit `packages/protocol/vectors/execute.json`.** It's the frozen proof that Solidity and
   TypeScript hash the same bytes. Change it and every signature breaks, and the symptom is an
   unhelpful "bad signature" that tells you nothing about the cause.
-- **Never copy an ABI or a shared type into an app.** Import from `@flippy/contracts` and
-  `@flippy/protocol`. A drifted copy is a silent revert.
-- **On boot, assert `FlippyGate.digestOf(...)` equals `proposalDigest(...)`** using the frozen
+- **Never copy an ABI or a shared type into an app.** Import from `@tappy/contracts` and
+  `@tappy/protocol`. A drifted copy is a silent revert.
+- **On boot, assert `TappyGate.digestOf(...)` equals `proposalDigest(...)`** using the frozen
   vector, and refuse to start if they differ. This one check is the difference between a
   five-minute bug and a five-hour one.
 - **The Flipper JS engine is mJS, not JavaScript.** No crypto, no bigint, no USB, no exceptions,
   no closures. It cannot sign. That's why the human key is on the laptop in v1.
 - **Don't add prompt-injection defences to the agent tools.** The defence is the human pressing
   Back. That's the whole pitch. See `docs/DECISIONS.md` #10.
+
+## Still named the old thing
+
+The project is Tappy now (DECISIONS #12), but the GitHub repo is still `FlippyTheDolphin`, so the
+clone URL above is the real one. Rename the repo when convenient. GitHub redirects the old name, so
+nothing breaks either way and the URLs above keep working after the rename.
 
 ## Open questions nobody has answered yet
 

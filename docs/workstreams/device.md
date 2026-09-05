@@ -5,15 +5,15 @@
 
 ## Deliverables
 1. `apps/bridge` — Node process: connects to the app's approval channel, sends `signer.hello`, on `approval.request` talks to the Flipper, on decision signs with the human key (v1) and sends `approval.result`.
-2. `device/flippy-js/flippy.js` — the Flipper app (already scaffolded): waits for a request, shows it, returns OK/Back.
+2. `device/tappy-js/tappy.js` — the Flipper app (already scaffolded): waits for a request, shows it, returns OK/Back.
 3. `docs/spikes.md` entry for Spike 1 (hour 1).
-4. Stretch (M6): `device/flippy-c` signer.
+4. Stretch (M6): `device/tappy-c` signer.
 
 ## Hour 0–1 — Spike 1: the file channel (do this before writing any code)
 Goal: confirm the laptop can write/read files on the SD card via the USB CLI while a JS app is showing a dialog.
 1. Connect Flipper via USB. Find the port: `ls /dev/cu.usbmodem*`. Open with `screen /dev/cu.usbmodemflip_XXXX 230400` (or `pnpm dlx serialport-terminal`). Press Enter, you should see the `>:` prompt.
 2. On the Flipper, open Apps → Scripts → run any JS example that shows a dialog (e.g. `dialog.js` from the examples folder), leave it on screen.
-3. In the terminal: `storage write /ext/apps_data/flippy/inbox.json` then type `{"seq":1}` and Ctrl+C. Then `storage read /ext/apps_data/flippy/inbox.json`.
+3. In the terminal: `storage write /ext/apps_data/tappy/inbox.json` then type `{"seq":1}` and Ctrl+C. Then `storage read /ext/apps_data/tappy/inbox.json`.
 4. Now write a 10-line JS that loops: `storage.read` the inbox, if present show `dialog.message` with its content. Run it, then write a different file from the laptop. Does the app see it?
 Record: works / works only when no dialog is open / CLI unavailable while JS app runs. Also note: does `storage` in Momentum's JS expose `read`/`write`/`exists`/`remove`? (Momentum's JS API is a superset of official; check their `js` docs in the firmware repo you flashed.)
 
@@ -38,26 +38,26 @@ Use `packages/protocol`'s `MockHumanSigner` as the reference: same interface, sa
 
 CLI gotchas to expect: the CLI echoes input; strip it. `storage write` ends on Ctrl+C (`\x03`). Chunked writes exist (`storage write_chunk <path> <size>`) if plain `write` mangles JSON. Keep payloads under 200 bytes.
 
-## flippy.js (Momentum JS)
+## tappy.js (Momentum JS)
 Screen (128×64) layout for `dialog`:
 ```
- header:  FLIPPY  #1a2b…9f0e
+ header:  TAPPY  #1a2b…9f0e
  text:    SEND 0.010 ETH
           to 0xAb12…F9e3
           Sepolia
  buttons: [Reject]        [Approve]
 ```
-Loop: `while(true){ if(storage.exists(INBOX)){ req=JSON.parse(read); if(req.seq>lastSeq){ show dialog; write OUTBOX {id,seq,approved,at}; lastSeq=req.seq; storage.remove(INBOX) } } delay(300) }`. Vibrate + LED on new request (`notification` module). Back button on the main loop exits. Add a splash with a dolphin (there's room for 1-bit art; it's on camera).
-Install: `device/flippy-js/install.sh` copies the script to `/ext/apps/Scripts/flippy.js` via the CLI. Launch from Apps → Scripts. (Momentum may allow `loader open` of a JS script from the CLI; if so, bridge can auto-launch it on boot. Nice, not required.)
+Loop: `while(true){ if(storage.exists(INBOX)){ req=JSON.parse(read); if(req.seq>lastSeq){ show dialog; write OUTBOX {id,seq,approved,at}; lastSeq=req.seq; storage.remove(INBOX) } } delay(300) }`. Vibrate + LED on new request (`notification` module). Back button on the main loop exits. Add a splash screen (there's room for 1-bit art; it's on camera).
+Install: `device/tappy-js/install.sh` copies the script to `/ext/apps/Scripts/tappy.js` via the CLI. Launch from Apps → Scripts. (Momentum may allow `loader open` of a JS script from the CLI; if so, bridge can auto-launch it on boot. Nice, not required.)
 
 ## M3 — the real demo
 Sequence: `pnpm --filter bridge dev` → prints human address → A redeploys with it → B switches the app to the external signer → the agent proposes → Flipper buzzes → OK → tx. Film it once as soon as it works; that clip is insurance.
 
 ## M6 stretch — key on the device (C app)
 Only start if M5 is done. Plan, in order:
-1. `pip install ufbt`; `ufbt update` against Momentum's SDK (their repo documents the `--index-url`). `ufbt create APPID=flippy`; `ufbt launch` a hello world. Budget: 2 hours. If it's not on the device in 2 hours, stop.
+1. `pip install ufbt`; `ufbt update` against Momentum's SDK (their repo documents the `--index-url`). `ufbt create APPID=tappy`; `ufbt launch` a hello world. Budget: 2 hours. If it's not on the device in 2 hours, stop.
 2. Vendor `lib/crypto` from FlipBIP (trezor-crypto subset: `secp256k1`, `ecdsa`, `sha3`, `hasher`, `rand`, `memzero`, `bignum`) as `fap_private_libs` in `application.fam`. Build. This is the RAM-risky step; strip anything not needed for sign.
-3. Key: on first run, `furi_hal_random_fill_buf` 32 bytes → save to `/ext/apps_data/flippy/key.bin`; derive address (keccak of pubkey) and show it. Bridge reads the address via a `getaddr` command.
+3. Key: on first run, `furi_hal_random_fill_buf` 32 bytes → save to `/ext/apps_data/tappy/key.bin`; derive address (keccak of pubkey) and show it. Bridge reads the address via a `getaddr` command.
 4. USB CDC channel (`usb_cdc_dual`, channel 1), tiny line protocol: `REQ <json>` → screen → OK → `ecdsa_sign_digest(&secp256k1, key, digest32, sig, &recid, NULL)` → `SIG <r||s||v>`; Back → `REJ`.
 5. Bridge gets a second `HumanSigner` impl: `FlipperDeviceSigner` (no key on laptop). Measure and log signing time; it's a slide.
 6. For the honesty clause: use `usb_cdc_single` + `cli_vcp_disable()` while the app runs so the laptop cannot inject buttons; restore on exit (see `gpio` app's `usb_uart_bridge.c` for the exact calls).

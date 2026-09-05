@@ -7,8 +7,8 @@
  * out, printed.
  *
  * Run:
- *   pnpm --filter @flippy/web spike:agent
- *   pnpm --filter @flippy/web spike:agent -- --only clear --repeat 5 --effort medium
+ *   pnpm --filter @tappy/web spike:agent
+ *   pnpm --filter @tappy/web spike:agent -- --only clear --repeat 5 --effort medium
  *
  * The tool definition and the system prompt are inline on purpose. They graduate into
  * `tools.ts` / `prompt.ts` once the loop exists (SPEC §3.5); nothing in the app imports
@@ -23,7 +23,7 @@ import { fileURLToPath } from "node:url";
 import OpenAI from "openai";
 import { z } from "zod";
 
-import { addressSchema } from "@flippy/protocol";
+import { addressSchema } from "@tappy/protocol";
 
 /* ---- environment ---------------------------------------------------------- */
 

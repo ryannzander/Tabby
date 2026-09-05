@@ -9,7 +9,7 @@ import {
   type Decision,
   type HumanSigner,
   type ProposalView,
-} from "@flippy/protocol";
+} from "@tappy/protocol";
 import type { FlipperCli } from "./flipperCli.js";
 
 export interface TypedMessage {

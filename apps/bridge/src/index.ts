@@ -8,7 +8,7 @@ import {
   hubToSignerSchema,
   type Decision,
   type HumanSigner,
-} from "@flippy/protocol";
+} from "@tappy/protocol";
 import { loadConfig } from "./config.js";
 import { FlipperCli } from "./flipperCli.js";
 import { FlipperHumanSigner } from "./flipperSigner.js";
@@ -30,7 +30,7 @@ async function buildSigner(cfg: ReturnType<typeof loadConfig>): Promise<HumanSig
 
   const cli = new FlipperCli(cfg.FLIPPER_PORT, cfg.FLIPPER_BAUD);
   await cli.open();
-  await cli.mkdir("/ext/apps_data/flippy");
+  await cli.mkdir("/ext/apps_data/tappy");
   console.log(`[bridge] Flipper connected on ${cfg.FLIPPER_PORT}`);
   return new FlipperHumanSigner({ ...common, cli });
 }

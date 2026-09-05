@@ -1,7 +1,7 @@
 # apps/mobile — React Native chat client (not started)
 
 Placeholder. The web app in `apps/web` ships first; this comes after, and shares the same
-tRPC API and the same `@flippy/protocol` types.
+tRPC API and the same `@tappy/protocol` types.
 
 ## Decided
 - React Native.

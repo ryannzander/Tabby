@@ -1,4 +1,4 @@
-# Working on Flippy
+# Working on Tappy
 
 Three people, one week, one Flipper between us. These rules exist so nobody waits on anybody.
 
@@ -52,7 +52,7 @@ interface is missing and that is a `protocol:` PR, not a queue.
 
 ```bash
 pnpm contracts:test                      # if you touched Solidity
-pnpm --filter @flippy/protocol test      # if you touched protocol
+pnpm --filter @tappy/protocol test      # if you touched protocol
 pnpm typecheck
 ```
 
@@ -60,7 +60,7 @@ CI runs these on every PR. A red PR does not merge.
 
 ## Rules that prevent the three most likely disasters
 
-1. **Never copy an ABI or a type.** Import from `@flippy/contracts` and `@flippy/protocol`.
+1. **Never copy an ABI or a type.** Import from `@tappy/contracts` and `@tappy/protocol`.
    A duplicated ABI that drifts is a silent revert on stage.
 2. **Never change `packages/protocol/vectors/execute.json`.** It is the frozen cross-language
    proof that Solidity and TypeScript hash the same bytes. If it changes, every signature in the

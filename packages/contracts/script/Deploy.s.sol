@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {FlippyGate} from "../src/FlippyGate.sol";
+import {TappyGate} from "../src/TappyGate.sol";
 import {MockToken} from "../src/MockToken.sol";
 import {MockSwap} from "../src/MockSwap.sol";
 import {MockMerchant} from "../src/MockMerchant.sol";
@@ -21,7 +21,7 @@ contract Deploy is Script {
 
         vm.startBroadcast(deployerKey);
 
-        FlippyGate gate = new FlippyGate(agent, human);
+        TappyGate gate = new TappyGate(agent, human);
         MockToken token = new MockToken();
         MockSwap swap = new MockSwap(token);
         MockMerchant merchant = new MockMerchant();

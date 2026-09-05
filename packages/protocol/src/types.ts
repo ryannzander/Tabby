@@ -133,10 +133,10 @@ export const hubToSignerSchema = z.discriminatedUnion("t", [approvalRequestSchem
 export type SignerToHub = z.infer<typeof signerToHubSchema>;
 export type HubToSigner = z.infer<typeof hubToSignerSchema>;
 
-/* ---- Flipper file protocol (bridge <-> flippy.js) ------------------------- */
+/* ---- Flipper file protocol (bridge <-> tappy.js) ------------------------- */
 
-export const INBOX_PATH = "/ext/apps_data/flippy/inbox.json";
-export const OUTBOX_PATH = "/ext/apps_data/flippy/outbox.json";
+export const INBOX_PATH = "/ext/apps_data/tappy/inbox.json";
+export const OUTBOX_PATH = "/ext/apps_data/tappy/outbox.json";
 
 export const flipperRequestSchema = proposalViewSchema
   .omit({ digest: true })

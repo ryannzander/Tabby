@@ -1,8 +1,8 @@
 // Exports the ABIs the apps import. Run after `forge build`.
-// Apps must import from @flippy/contracts, never copy an ABI into their own tree.
+// Apps must import from @tappy/contracts, never copy an ABI into their own tree.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 
-const CONTRACTS = ["FlippyGate", "MockToken", "MockSwap", "MockMerchant"];
+const CONTRACTS = ["TappyGate", "MockToken", "MockSwap", "MockMerchant"];
 mkdirSync("abi", { recursive: true });
 
 const lines = [

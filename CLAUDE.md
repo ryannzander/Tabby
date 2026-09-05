@@ -1,4 +1,4 @@
-# Flippy the Dolphin — working notes for Claude
+# Tappy — working notes for Claude
 
 A 2-of-2 agent wallet: an AI agent proposes a transaction, a human physically approves it on a
 Flipper Zero, and only then does it execute. ETHOnline 2026, testnet only, three people, one week.
@@ -12,15 +12,15 @@ settled — do not reopen those without being asked.
   wallet panel, mock shop, relayer.
 - `apps/bridge` — Node process on the laptop with the Flipper. USB serial, holds the human key in v1.
 - `packages/protocol` — shared types, the EIP-712 digest, `HumanSigner`, `MockHumanSigner`.
-- `packages/contracts` — Foundry. `FlippyGate` is the 2-of-2 gate.
-- `device/flippy-js` — the Flipper app, written in mJS.
+- `packages/contracts` — Foundry. `TappyGate` is the 2-of-2 gate.
+- `device/tappy-js` — the Flipper app, written in mJS.
 
 ## Rules specific to this repo
 
 - **Never edit `packages/protocol/vectors/execute.json`.** It is the frozen proof that Solidity and
   TypeScript produce the same EIP-712 digest, asserted by `test/Digest.t.sol` and `digest.test.ts`.
   If it changes, every signature breaks and the symptom is an unhelpful "bad signature".
-- **Never copy an ABI or a shared type.** Import from `@flippy/contracts` / `@flippy/protocol`.
+- **Never copy an ABI or a shared type.** Import from `@tappy/contracts` / `@tappy/protocol`.
 - **Anything reaching the chain or the device goes through `HumanSigner`.** That interface is why
   two thirds of the team can work without hardware. Do not add a code path that bypasses it.
 - **Proposal status changes go through the state machine** (`ALLOWED_TRANSITIONS` in protocol).
@@ -33,7 +33,7 @@ settled — do not reopen those without being asked.
 ```bash
 pnpm install
 pnpm contracts:test                    # forge test, 13 tests incl. the digest vector
-pnpm --filter @flippy/protocol test    # vitest
+pnpm --filter @tappy/protocol test    # vitest
 pnpm typecheck
 pnpm dev                               # turbo, all apps
 ```

@@ -4,13 +4,13 @@ pragma solidity ^0.8.24;
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-/// @title FlippyGate — a 2-of-2 wallet: an AI agent proposes, a human physically approves.
+/// @title TappyGate — a 2-of-2 wallet: an AI agent proposes, a human physically approves.
 /// @notice Neither key can move funds alone. `execute` requires a signature from BOTH the
 ///         agent key and the human key over the same EIP-712 digest. Anyone may relay the
 ///         call; the signatures, not msg.sender, are the authority.
 /// @dev Deliberately has no spending limits, allowlists or owner rotation. Those are policy
 ///      features other products already ship; the point of this contract is the second hand.
-contract FlippyGate is EIP712 {
+contract TappyGate is EIP712 {
     bytes32 private constant EXECUTE_TYPEHASH =
         keccak256("Execute(uint256 nonce,address to,uint256 value,bytes data,uint256 deadline)");
 
@@ -28,7 +28,7 @@ contract FlippyGate is EIP712 {
     error CallFailed(bytes ret);
     error ZeroAddress();
 
-    constructor(address _agent, address _human) EIP712("FlippyGate", "1") {
+    constructor(address _agent, address _human) EIP712("TappyGate", "1") {
         if (_agent == address(0) || _human == address(0)) revert ZeroAddress();
         agent = _agent;
         human = _human;

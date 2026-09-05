@@ -7,7 +7,7 @@ import { SerialPort } from "serialport";
  * foreground. If they do not, the fallbacks are, in order:
  *   a) the JS app polls instead of blocking in a dialog,
  *   b) speak the RPC protobuf protocol instead of the text CLI,
- *   c) a C app that owns USB CDC (see device/flippy-c/README.md).
+ *   c) a C app that owns USB CDC (see device/tappy-c/README.md).
  */
 export class FlipperCli {
   private port: SerialPort | null = null;

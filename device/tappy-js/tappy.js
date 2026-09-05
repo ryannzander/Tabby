@@ -1,16 +1,16 @@
-// Flippy the Dolphin — approval app for Flipper Zero (Momentum JS engine).
+// Tappy — approval app for Flipper Zero (Momentum JS engine).
 //
 // This app is the physical gate. The laptop bridge writes a request to inbox.json;
 // this shows it and writes the human's decision to outbox.json. No key material here in v1.
 //
-// Install:  pnpm --filter @flippy/bridge flipper:install
-// Run:      Apps -> Scripts -> flippy.js
+// Install:  pnpm --filter @tappy/bridge flipper:install
+// Run:      Apps -> Scripts -> tappy.js
 
 let storage = require("storage");
 let dialog = require("dialog");
 let notify = require("notification");
 
-let DIR = "/ext/apps_data/flippy";
+let DIR = "/ext/apps_data/tappy";
 let INBOX = DIR + "/inbox.json";
 let OUTBOX = DIR + "/outbox.json";
 let POLL_MS = 300;
@@ -49,7 +49,7 @@ function respond(req, approved) {
   else notify.error();
 }
 
-print("Flippy: waiting for approval requests...");
+print("Tappy: waiting for approval requests...");
 
 while (true) {
   let req = readJson(INBOX);
@@ -59,7 +59,7 @@ while (true) {
     announce();
 
     let approved = dialog.custom({
-      header: "FLIPPY  " + req.short,
+      header: "TAPPY  " + req.short,
       text: screenFor(req),
       button_left: "Reject",
       button_right: "Approve",
@@ -67,7 +67,7 @@ while (true) {
 
     respond(req, approved === "Approve");
     storage.remove(INBOX);
-    print("Flippy: " + (approved === "Approve" ? "approved" : "rejected") + " #" + req.seq);
+    print("Tappy: " + (approved === "Approve" ? "approved" : "rejected") + " #" + req.seq);
   }
 
   delay(POLL_MS);

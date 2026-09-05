@@ -65,7 +65,7 @@ copy_env "apps/bridge/.env" "apps/bridge/.env.example"
 
 say "Verifying"
 pnpm contracts:test >/dev/null && echo "  contracts: 13 tests pass"
-pnpm --filter @flippy/protocol test >/dev/null 2>&1 && echo "  protocol: 8 tests pass"
+pnpm --filter @tappy/protocol test >/dev/null 2>&1 && echo "  protocol: 8 tests pass"
 
 if [ -n "${FOUNDRY_PATH_HINT:-}" ] || ! grep -qs foundry <<<"${PATH}"; then
   hint=$(foundry_bin || true)

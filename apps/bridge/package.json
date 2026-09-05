@@ -1,5 +1,5 @@
 {
-  "name": "@flippy/bridge",
+  "name": "@tappy/bridge",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@flippy/protocol": "workspace:*",
+    "@tappy/protocol": "workspace:*",
     "serialport": "^12.0.0",
     "viem": "^2.21.0",
     "ws": "^8.18.0",

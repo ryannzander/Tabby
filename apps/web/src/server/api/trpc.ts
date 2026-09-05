@@ -130,7 +130,7 @@ const bridgeMiddleware = t.middleware(async ({ ctx, next }) => {
     });
   }
 
-  const presented = ctx.headers.get("x-flippy-bridge-token") ?? "";
+  const presented = ctx.headers.get("x-tappy-bridge-token") ?? "";
   const expected = env.BRIDGE_TOKEN;
   const a = Buffer.from(presented);
   const b = Buffer.from(expected);

@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {FlippyGate} from "../src/FlippyGate.sol";
+import {TappyGate} from "../src/TappyGate.sol";
 
 /// @notice Guards Risk #3: if Solidity and TypeScript disagree by one byte, every execute()
 ///         reverts with a useless "bad sig". Both sides assert the same frozen vector.
@@ -29,9 +29,9 @@ contract DigestTest is Test {
 
         // The vector pins a specific chainId and contract address, so deploy to that address there.
         vm.chainId(chainId);
-        FlippyGate gate = new FlippyGate(agent, human);
+        TappyGate gate = new TappyGate(agent, human);
         vm.etch(gateAddr, address(gate).code);
-        FlippyGate pinned = FlippyGate(payable(gateAddr));
+        TappyGate pinned = TappyGate(payable(gateAddr));
 
         bytes32 got = pinned.digestOf(nonce, to, value, data, deadline);
         assertEq(got, expectedDigest, "Solidity digest != TypeScript digest");

@@ -6,7 +6,7 @@
  * row is the channel.
  *
  * The three procedures carry the same payloads SPEC §3.4 defined for the socket, so
- * `@flippy/protocol` did not change: `hello` takes a `signer.hello`, `next` returns an
+ * `@tappy/protocol` did not change: `hello` takes a `signer.hello`, `next` returns an
  * `approval.request`, `submit` takes an `approval.result`. If we ever do get a socket, the wire
  * shapes are already right.
  */
@@ -22,7 +22,7 @@ import {
   hexSchema,
   signerKindSchema,
   type ProposalView,
-} from "@flippy/protocol";
+} from "@tappy/protocol";
 import { z } from "zod";
 
 import { env } from "~/env";

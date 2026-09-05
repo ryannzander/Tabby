@@ -30,6 +30,6 @@ jobs:
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - name: protocol tests
-        run: pnpm --filter @flippy/protocol test
+        run: pnpm --filter @tappy/protocol test
       - name: typecheck
         run: pnpm typecheck

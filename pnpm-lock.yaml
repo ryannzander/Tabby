@@ -20,7 +20,7 @@ importers:
 
   apps/bridge:
     dependencies:
-      '@flippy/protocol':
+      '@tappy/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
       serialport:
@@ -51,18 +51,18 @@ importers:
 
   apps/web:
     dependencies:
-      '@flippy/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@flippy/protocol':
-        specifier: workspace:*
-        version: link:../../packages/protocol
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
       '@tanstack/react-query':
         specifier: ^5.69.0
         version: 5.102.8(react@19.2.8)
+      '@tappy/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@tappy/protocol':
+        specifier: workspace:*
+        version: link:../../packages/protocol
       '@trpc/client':
         specifier: ^11.0.0
         version: 11.18.0(@trpc/server@11.18.0(typescript@5.9.3))(typescript@5.9.3)

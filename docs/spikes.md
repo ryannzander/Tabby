@@ -51,9 +51,9 @@ argues instead of calling the tool is a broken demo with nobody to blame.
 `OPENAI_API_KEY` in `apps/web/.env` (not in `.env.example` yet — add it), then:
 
 ```bash
-pnpm --filter @flippy/web spike:agent                        # 4 scenarios x 3 runs, effort=low
-pnpm --filter @flippy/web spike:agent -- --effort high       # same, for the latency comparison
-pnpm --filter @flippy/web spike:agent -- --only injection --repeat 5
+pnpm --filter @tappy/web spike:agent                        # 4 scenarios x 3 runs, effort=low
+pnpm --filter @tappy/web spike:agent -- --effort high       # same, for the latency comparison
+pnpm --filter @tappy/web spike:agent -- --only injection --repeat 5
 ```
 
 Scenarios are `clear`, `vague`, `units` and `injection`. Arguments are `JSON.parse`d and then
@@ -82,7 +82,7 @@ channel as a local Node process during the demo; (c) Supabase Realtime.
 | `approvals.next` | `{ address }`, poll every 500 ms | `approval.request` |
 | `approvals.submit` | `{ decision }` | `approval.result` |
 
-`@flippy/protocol` did not change. The payloads are the same ones SPEC §3.4 defined for the
+`@tappy/protocol` did not change. The payloads are the same ones SPEC §3.4 defined for the
 socket, so this was not a `protocol:` PR and workstream C is not blocked.
 
 **Consequence 1 — nobody waits.** This is the part that is not obvious from the options list.
@@ -103,7 +103,7 @@ no disconnect message to miss.
 
 **Consequence 4 — the channel needs its own auth.** A socket the bridge dials into is at least a
 connection we accept once. Four HTTP endpoints on a public Vercel URL are reachable by anyone who
-finds them. So the bridge sends `x-flippy-bridge-token`, and the channel refuses everything while
+finds them. So the bridge sends `x-tappy-bridge-token`, and the channel refuses everything while
 `BRIDGE_TOKEN` is unset. `approvals.submit` also recovers `humanSig` against `HUMAN_ADDRESS`,
 because a token in a laptop `.env` is a weaker secret than a signature. Without that check a leaked
 token moves a proposal out of `PENDING_HUMAN` and the real press has nowhere to land. This is not

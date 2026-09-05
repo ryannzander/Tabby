@@ -74,7 +74,7 @@ export class MockHumanSigner implements HumanSigner {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
     const prompt = [
       "",
-      "  ┌─ FLIPPY ─ approval request ─────────",
+      "  ┌─ TAPPY ─ approval request ─────────",
       `  │ ${view.action} ${view.amount}`,
       `  │ to ${view.counterparty}`,
       `  │ ${view.chain}   ${view.short}`,
