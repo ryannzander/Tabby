@@ -1,4 +1,5 @@
 import { approvalsRouter } from "~/server/api/routers/approvals";
+import { chatRouter } from "~/server/api/routers/chat";
 import { postRouter } from "~/server/api/routers/post";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
@@ -9,6 +10,7 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
  */
 export const appRouter = createTRPCRouter({
   approvals: approvalsRouter,
+  chat: chatRouter,
   post: postRouter,
 });
 
