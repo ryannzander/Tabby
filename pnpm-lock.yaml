@@ -151,6 +151,9 @@ importers:
       typescript-eslint:
         specifier: ^8.27.0
         version: 8.69.0(eslint@9.39.5(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@5.9.3)
+      vitest:
+        specifier: ^2.1.9
+        version: 2.1.9(@types/node@20.19.43)(lightningcss@1.32.0)(supports-color@7.2.0)
 
   packages/contracts:
     devDependencies:

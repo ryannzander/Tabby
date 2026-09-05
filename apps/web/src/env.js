@@ -19,6 +19,15 @@ export const env = createEnv({
       .string()
       .regex(/^0x[0-9a-fA-F]{40}$/)
       .optional(),
+    /**
+     * Which key signs as the agent. `local` reads AGENT_PRIVATE_KEY; `privy` is cut line #4 and
+     * is not implemented yet. Testnet keys are checked in on purpose, so this is not a secret.
+     */
+    AGENT_SIGNER: z.enum(["local", "privy"]).default("local"),
+    AGENT_PRIVATE_KEY: z
+      .string()
+      .regex(/^0x[0-9a-fA-F]{64}$/)
+      .optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
@@ -41,6 +50,8 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     BRIDGE_TOKEN: process.env.BRIDGE_TOKEN,
     HUMAN_ADDRESS: process.env.HUMAN_ADDRESS,
+    AGENT_SIGNER: process.env.AGENT_SIGNER,
+    AGENT_PRIVATE_KEY: process.env.AGENT_PRIVATE_KEY,
     NODE_ENV: process.env.NODE_ENV,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
