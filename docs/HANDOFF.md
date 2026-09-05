@@ -52,9 +52,8 @@ You own workstream B. In order:
 1. **Issue #2** — one hard-coded model turn that produces a `propose_send` tool call. One script,
    no UI. Model is `gpt-5.6-terra`; tool calls go through `/v1/responses`, not
    `/v1/chat/completions`. Record the result in `docs/spikes.md`.
-2. **Issue #3** — decide where the approval channel lives. Vercel can't hold a WebSocket. The
-   recommendation is in `docs/spikes.md` entry 3: the bridge polls a row and POSTs results back to
-   a tRPC mutation. Boring, works, ~1s latency that nobody will notice.
+2. **Issue #3** — done. The bridge polls `approvals.next` and posts to `approvals.submit`.
+   No WebSocket, no protocol change. `docs/spikes.md` entry 3 has the reasoning.
 3. **Issue #6 (M2)** — chat → agent → proposal → mock approval → transaction on Sepolia. This
    needs @IGanjali to finish issue #5 (deploy) first, so start #2 and #3 while you wait.
 

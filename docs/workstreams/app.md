@@ -9,7 +9,7 @@ Everything lives in `apps/web` (T3: Next.js 15 App Router, tRPC v11, Drizzle, Ta
 ## Deliverables
 1. Chat UI + the agent tool-calling loop that produces proposals.
 2. Wallet panel: balances, both keys, signer status, live proposal list.
-3. Approval channel: a WebSocket endpoint the bridge dials into.
+3. Approval channel: tRPC procedures the bridge polls. Decided, see `../spikes.md` entry 3.
 4. Relayer: submits `FlippyGate.execute` once both signatures exist.
 5. Mock shop route with an item whose description carries the injection (the attack scene).
 
@@ -28,7 +28,7 @@ src/
   app/
     page.tsx              chat + wallet, side by side (this is the demo screen)
     shop/page.tsx         mock merchant; one item's description contains the injection
-    api/ws/route.ts       approval channel (see note below)
+                          (no ws route: Vercel cannot hold a socket, see spikes.md entry 3)
   server/
     api/routers/
       chat.ts             chat.send mutation -> agent loop; chat.history query
@@ -44,20 +44,16 @@ src/
       proposals.ts        buildProposal(action): reads nonce from chain, deadline = now + 600,
                           digest via @flippy/protocol, agent signature
       agentSigner.ts      interface { address(); signDigest() }: PrivyAgentSigner | LocalAgentSigner
-      humanSigner.ts      mock (in-process) | external (WS-backed)
+      approvals.ts        hello / next / submit, the polled channel the bridge calls
       relayer.ts          viem writeContract + receipt -> SUBMITTED/EXECUTED/FAILED
     db/schema.ts          proposals, messages, invoices
 ```
 
-**WebSocket note:** Next route handlers on Vercel cannot hold a long-lived socket. Pick one at
-hour 2 and write the decision in `docs/spikes.md`:
-- (a) run the WS server in the bridge's direction instead — the web app polls a `pending_approval`
-  row and the bridge posts results to a plain tRPC mutation (simplest, works on Vercel, ~1 s latency);
-- (b) keep a real WS by running the approval channel as a separate tiny Node process locally during
-  the demo, with Vercel used only for the UI;
-- (c) Supabase Realtime as the channel.
-Recommended: **(a)**. It is boring, it works on Vercel, and a second of latency is invisible next
-to a human pressing a button. The `HumanSigner` interface does not change either way.
+**Approval channel: decided.** Option (a). The bridge polls `approvals.next` every 500 ms and
+posts the result to `approvals.submit`. There is no WebSocket, and `@flippy/protocol` did not
+change. Full reasoning and the consequences that are not obvious are in `docs/spikes.md` entry 3.
+The one to remember: nothing on the hub ever waits for the human. `propose_*` writes the row and
+returns.
 
 ## Rules
 - Every status change goes through `store.transition(id, from, to)` and throws on an illegal move.

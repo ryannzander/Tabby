@@ -68,12 +68,44 @@ needs the scripted replay button, and that is a build item, not a retake.
 
 ---
 
-## 3. Where does the approval channel live, given Vercel can't hold a WebSocket? — <owner B>, TODO hour 2
+## 3. Where does the approval channel live, given Vercel can't hold a WebSocket? — B, 2026-09-04
 **Options:** (a) bridge polls a `pending_approval` row and POSTs the result to tRPC; (b) run the
 channel as a local Node process during the demo; (c) Supabase Realtime.
-**Recommended:** (a). Boring, works on Vercel, ~1 s latency is invisible next to a human pressing
-a button. The `HumanSigner` interface is unchanged either way.
-**Answer:** _not yet decided_
+**Answer:** (a). There is no WebSocket. The `web_proposal` row *is* the channel.
+
+**Evidence:** `apps/web/src/server/api/routers/approvals.ts` and the two tables in
+`src/server/db/schema.ts`. Four procedures, and the bridge only needs three of them:
+
+| The bridge calls | Carries | Replaces the socket message |
+|---|---|---|
+| `approvals.hello` | `{ address, kind }` | `signer.hello` |
+| `approvals.next` | `{ address }`, poll every 500 ms | `approval.request` |
+| `approvals.submit` | `{ decision }` | `approval.result` |
+
+`@flippy/protocol` did not change. The payloads are the same ones SPEC §3.4 defined for the
+socket, so this was not a `protocol:` PR and workstream C is not blocked.
+
+**Consequence 1 — nobody waits.** This is the part that is not obvious from the options list.
+`propose_*` writes a `PENDING_HUMAN` row and returns immediately, and `approvals.submit` moves it
+to `SUBMITTED`. No request is open while the human thinks, which is the only reason this works on
+serverless at all. `HumanSigner.requestApproval` returning a `Promise<Decision>` still fits
+`MockHumanSigner`, which runs in-process, but the external path never calls it. The relayer picks
+the decision up from the row on its next tick.
+
+**Consequence 2 — expiry needs a tick.** Only one proposal may be `PENDING_HUMAN` at a time or the
+nonces collide, and a partial unique index enforces it. So a proposal nobody answers blocks every
+later one. `approvals.expireStale` exists for the relayer to call; if the relayer is not running,
+nothing expires on its own.
+
+**Consequence 3 — polling is the heartbeat.** `approvals.next` bumps `lastSeenAt`, and a signer
+counts as connected for 2 s after its last poll. A bridge that dies goes stale by itself. There is
+no disconnect message to miss.
+
+**Cost:** up to 500 ms before the Flipper buzzes, plus one relayer tick after the press. Against a
+human reaching for a button and 12 to 30 s of Sepolia inclusion, nobody will see it.
+
+**Not done yet:** no migration has been generated or run. There is no `DATABASE_URL`, so none of
+this has touched a real Postgres.
 
 ---
 

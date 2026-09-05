@@ -22,7 +22,7 @@ Companion files: `workstreams/contracts.md`, `workstreams/app.md`, `workstreams/
 | Chain | **Sepolia** with test ETH for build and demo. Same bytecode redeployed to **Arc testnet** and **Hedera testnet** (moves their native coin there). |
 | Agent key | **Privy server wallet**, with a plain local key behind the same interface as fallback. |
 | Surfaces | Web chat + wallet dashboard (`apps/web`, T3), the Flipper, a mock **shop**. React Native client (`apps/mobile`) comes later. |
-| Hosting | Web app on Vercel, Postgres on Supabase. The bridge runs on the laptop that has the Flipper and dials out to the app's WebSocket, so no inbound tunnel is needed. |
+| Hosting | Web app on Vercel, Postgres on Supabase. The bridge runs on the laptop that has the Flipper and polls the app over HTTPS, so no inbound tunnel is needed. |
 
 ---
 
@@ -55,10 +55,10 @@ Companion files: `workstreams/contracts.md`, `workstreams/app.md`, `workstreams/
 │  └────────────┘  subscribe│ server/signers: AgentSigner      │ │
 │                           │   (Privy server wallet | local)  │ │
 │  ┌────────────┐           │ server/relayer: submits execute  │ │
-│  │ mock shop  │ ◄────────►│ /api/ws: approval channel        │ │
+│  │ mock shop  │ ◄────────►│ api/approvals: polled channel    │ │
 │  └────────────┘           └──────────────┬───────────────────┘ │
 └──────────────────────────────────────────┼─────────────────────┘
-                     Supabase Postgres     │ WebSocket (bridge dials out)
+                     Supabase Postgres     │ tRPC over HTTPS (bridge polls)
                                            │
                             ┌──────────────▼───────────────────┐
                             │  apps/bridge  (laptop, Node)     │
@@ -81,9 +81,9 @@ Companion files: `workstreams/contracts.md`, `workstreams/app.md`, `workstreams/
 
 1. Human types a request in our chat UI. The tRPC `chat.send` procedure runs a model tool-calling loop; the agent calls `propose_send` / `propose_swap` / `propose_buy`.
 2. **hub** builds a `Proposal` (to, value, data, deadline, nonce from chain), computes the EIP-712 digest, has the **AgentSigner** sign it. Status `PENDING_HUMAN`. Returns `proposalId` to the agent.
-3. hub pushes `approval.request` over WS to the connected **HumanSigner** (bridge, or mock).
+3. The row sits at `PENDING_HUMAN`. The bridge is polling `approvals.next` and picks it up. Nothing on the hub is waiting (spike 3).
 4. **bridge** writes a small JSON summary to the Flipper's SD card via the CLI. **flippy.js** picks it up, shows a dialog: action, amount, recipient, id. Human presses OK or Back.
-5. flippy.js writes the decision to an outbox file. bridge reads it, and if approved, signs the digest with the human key. Sends `approval.result` to hub.
+5. flippy.js writes the decision to an outbox file. bridge reads it, and if approved, signs the digest with the human key. Posts it to `approvals.submit`.
 6. hub's **Relayer** calls `FlippyGate.execute(to, value, data, deadline, agentSig, humanSig)`. Status `SUBMITTED` → `EXECUTED` (or `FAILED`). Rejection → `REJECTED`.
 7. The chat UI subscribes to the proposal and renders its state inline: pending → approved on device → executed, with the tx link. The agent is told the outcome in the tool result and reports it in the conversation.
 
@@ -171,16 +171,17 @@ Implementations:
 - `FlipperHumanSigner` (in `apps/bridge`): local key + Flipper dialog (v1).
 - `FlipperDeviceSigner` (stretch): no local key; device returns the signature.
 
-### 3.4 Approval channel (hub ↔ signer process, WebSocket JSON)
+### 3.4 Approval channel (hub ↔ signer process, polled tRPC)
+
+Vercel cannot hold a socket, so the signer polls. Same payloads, carried over HTTPS:
 
 ```
-signer → hub   { t: "signer.hello",  address, kind: "mock"|"flipper"|"flipper-c" }
-hub → signer   { t: "approval.request", view: ProposalView, timeoutMs }
-signer → hub   { t: "approval.result", decision: Decision }
-hub → signer   { t: "approval.cancel", id }              // proposal expired
+signer → hub   approvals.hello   { address, kind: "mock"|"flipper"|"flipper-c" }
+signer → hub   approvals.next    { address }            // every 500 ms; returns a view or null
+signer → hub   approvals.submit  { decision: Decision }
 ```
 
-Exactly one signer may be connected; hub rejects a second `signer.hello`. hub with no signer connected returns `FAILED: no signer` immediately (so a missing bridge is loud, not silent).
+Exactly one signer may be connected; `hello` rejects a second address. Polling is the heartbeat, so a signer counts as connected for 2 s after its last `next`. hub with no signer connected fails `propose_*` immediately (so a missing bridge is loud, not silent). Expiry replaces `approval.cancel`: the relayer calls `approvals.expireStale`. See `docs/spikes.md` entry 3.
 
 ### 3.5 Agent tools (function-tool definitions, `apps/web/src/server/agent/tools.ts`)
 
@@ -256,7 +257,7 @@ Foundry tests must cover: happy path; wrong agent; wrong human; replay of the sa
 | Deploy | Vercel | zero-config for Next; a public URL means the bridge can dial in from anywhere. |
 | Agent | OpenAI SDK (`openai`), model `gpt-5.6-terra`, tool calling via `/v1/responses` | our loop, our prompt, our UI. No connector setup, no tunnel, no OAuth. Terra is the mid tier: $2/$12 per MTok against Sol's $5/$30. |
 | Mobile | React Native (later) | reuses `@flippy/protocol` and the same tRPC router. |
-| Web ↔ bridge | `ws` WebSocket, JSON, bridge dials out | no inbound tunnel; works from a laptop behind any NAT. |
+| Web ↔ bridge | polled tRPC over HTTPS, bridge dials out | no inbound tunnel, no socket. Vercel cannot hold one. Spike 3. |
 | Agent signer | Privy server wallets (`@privy-io/server-auth`) | prize requirement; one call `signTypedData`. Local viem account behind the same interface. |
 | Store | in-memory + append-only `proposals.jsonl` | nothing survives that shouldn't; restart-safe enough for a demo. |
 | Frontend | React + Vite + Tailwind | team strength; dashboard is one page. |

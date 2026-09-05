@@ -1,7 +1,10 @@
 // Example model schema from the Drizzle docs
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
-import { index, pgTableCreator } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { index, pgTableCreator, uniqueIndex } from "drizzle-orm/pg-core";
+
+import type { Action, ProposalStatus, ProposalView, SignerKind } from "@flippy/protocol";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -24,3 +27,72 @@ export const posts = createTable(
   }),
   (t) => [index("name_idx").on(t.name)]
 );
+
+/**
+ * The approval channel (spike 3). Vercel route handlers cannot hold a socket open, so this table
+ * *is* the channel: the hub writes a row, the bridge polls for it, the bridge posts a decision
+ * back. Nothing streams. See `docs/spikes.md` entry 3.
+ *
+ * Bigints are stored as text. Postgres `bigint` comes back as a JS number through postgres-js and
+ * wei does not survive that. Convert at the edge with `BigInt(row.callValue)`.
+ */
+export const proposals = createTable(
+  "proposal",
+  (d) => ({
+    /** The EIP-712 digest. The id is the hash, so it is bound to one exact call. */
+    id: d.varchar({ length: 66 }).primaryKey(),
+    chainId: d.integer().notNull(),
+    gate: d.varchar({ length: 42 }).notNull(),
+    nonce: d.text().notNull(),
+
+    callTo: d.varchar({ length: 42 }).notNull(),
+    callValue: d.text().notNull(),
+    callData: d.text().notNull(),
+
+    action: d.jsonb().$type<Action>().notNull(),
+    /** Exactly what the Flipper renders. Built once by the hub so the device never derives it. */
+    view: d.jsonb().$type<ProposalView>().notNull(),
+
+    deadline: d.integer().notNull(),
+    agentSig: d.text(),
+    humanSig: d.text(),
+
+    status: d.varchar({ length: 16 }).$type<ProposalStatus>().notNull(),
+    txHash: d.varchar({ length: 66 }),
+    error: d.text(),
+
+    /** Set when the bridge hands the request to the device, so a poll is not served twice. */
+    claimedAt: d.timestamp({ withTimezone: true }),
+    /** Increments per request. The device ignores an inbox whose seq it already answered. */
+    seq: d.integer().generatedByDefaultAsIdentity().notNull(),
+
+    createdAt: d
+      .timestamp({ withTimezone: true })
+      .$defaultFn(() => new Date())
+      .notNull(),
+    decidedAt: d.timestamp({ withTimezone: true }),
+    originator: d.varchar({ length: 8 }).$type<"chat" | "test">().notNull(),
+  }),
+  (t) => [
+    index("proposal_status_idx").on(t.status),
+    // Only one proposal may be PENDING_HUMAN at a time or the nonces collide. Enforced in the
+    // store as well, but a partial unique index means a race cannot slip past it.
+    uniqueIndex("proposal_one_pending_idx")
+      .on(t.status)
+      .where(sql`${t.status} = 'PENDING_HUMAN'`),
+  ]
+);
+
+/**
+ * Who is currently able to approve. A row is the answer to `signerConnected`, which the wallet
+ * panel shows and `propose_*` refuses without. Polling `approvals.next` is the heartbeat, so a
+ * bridge that dies goes stale on its own without needing a disconnect message.
+ */
+export const signerSessions = createTable("signer_session", (d) => ({
+  address: d.varchar({ length: 42 }).primaryKey(),
+  kind: d.varchar({ length: 16 }).$type<SignerKind>().notNull(),
+  lastSeenAt: d
+    .timestamp({ withTimezone: true })
+    .$defaultFn(() => new Date())
+    .notNull(),
+}));
