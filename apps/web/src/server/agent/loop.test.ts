@@ -229,6 +229,41 @@ describe("runAgentTurn", () => {
     expect(answered).toBe(made);
   });
 
+  // The cap has to bound the API calls, not just the tools that run. The test above lets the
+  // scripted model give up on its own, which hides the case that costs money: a model that
+  // answers "stop calling tools" with another tool call. Nothing here ever stops asking.
+  it("stops requesting once the budget is spent, even if the model never stops asking", async () => {
+    const calls: OpenAI.Responses.ResponseCreateParamsNonStreaming[] = [];
+    const client: ResponsesClient = {
+      responses: {
+        create: vi.fn(async (body) => {
+          calls.push(body);
+          return {
+            output: [toolCall("get_wallet", {}, `call_${calls.length}`)],
+            output_text: "",
+            usage: { input_tokens: 10, output_tokens: 5 },
+          } as unknown as OpenAI.Responses.Response;
+        }),
+      },
+    };
+    const tools = fakeTools();
+
+    const turn = await runAgentTurn("never stop", { client, tools });
+
+    expect(turn.hitCap).toBe(true);
+    expect(tools.get_wallet).toHaveBeenCalledTimes(MAX_TOOL_ROUND_TRIPS);
+    // Six round trips, the request that hits the cap, then one final request with tools forbidden.
+    expect(calls).toHaveLength(MAX_TOOL_ROUND_TRIPS + 2);
+    expect(calls.at(-1)!.tool_choice).toBe("none");
+
+    // The final response's tool call cannot be answered, so it must not reach the history the
+    // caller keeps. Every function_call that does survive has an output next to it.
+    const made = turn.items.filter((i) => "type" in i && i.type === "function_call").length;
+    const answered = turn.items.filter((i) => "type" in i && i.type === "function_call_output").length;
+    expect(made).toBe(MAX_TOOL_ROUND_TRIPS + 1);
+    expect(answered).toBe(made);
+  });
+
   it("carries prior history into the first request", async () => {
     const { client, calls } = scriptedClient([{ output: [message("ok")], text: "ok" }]);
     const history = [{ role: "user" as const, content: "earlier" }];

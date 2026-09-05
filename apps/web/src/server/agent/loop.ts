@@ -137,6 +137,10 @@ export async function runAgentTurn(
   let outputTokens = 0;
   let roundTrips = 0;
   let hitCap = false;
+  // Set once the budget is spent. The next request forbids tools and is the last one, so a model
+  // that never stops asking cannot keep the turn alive. Telling it to stop is not enough: asking
+  // nicely and looping again is an unbounded bill and a request that never returns.
+  let forceAnswer = false;
 
   for (;;) {
     const response = await client.responses.create({
@@ -144,6 +148,7 @@ export async function runAgentTurn(
       instructions: SYSTEM_PROMPT,
       input: [...history, ...newItems],
       tools: TOOL_DEFINITIONS,
+      ...(forceAnswer ? { tool_choice: "none" as const } : {}),
       reasoning: { effort },
       max_output_tokens: 16000,
     });
@@ -153,8 +158,15 @@ export async function runAgentTurn(
     text = response.output_text?.trim() ?? "";
 
     // Reasoning items have to be carried forward too, or the next request drops the model's own
-    // context for the tool call it just made.
-    newItems.push(...(response.output as unknown as OpenAI.Responses.ResponseInputItem[]));
+    // context for the tool call it just made. Calls made on the final request are dropped instead:
+    // nothing will answer them, and an unanswered function_call in the history the caller keeps
+    // makes every later turn fail. `tool_choice: "none"` should mean there are none.
+    const output = forceAnswer
+      ? response.output.filter((item) => item.type !== "function_call")
+      : response.output;
+    newItems.push(...(output as unknown as OpenAI.Responses.ResponseInputItem[]));
+
+    if (forceAnswer) break;
 
     const calls = response.output.filter(
       (item): item is OpenAI.Responses.ResponseFunctionToolCall => item.type === "function_call",
@@ -163,6 +175,7 @@ export async function runAgentTurn(
 
     if (roundTrips >= maxRoundTrips) {
       hitCap = true;
+      forceAnswer = true;
       // Answer every call, or the next request is malformed: the Responses API requires an output
       // for each function_call already in the input.
       for (const call of calls) {
