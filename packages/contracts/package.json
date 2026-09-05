@@ -1,0 +1,23 @@
+{
+  "name": "@flippy/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "command -v forge >/dev/null || { echo \"forge not found. Install: curl -L https://foundry.paradigm.xyz | bash && foundryup   (then add ~/.foundry/bin to PATH)\"; exit 1; }; forge build && node scripts/export-abi.mjs",
+    "test": "command -v forge >/dev/null || { echo \"forge not found. Install: curl -L https://foundry.paradigm.xyz | bash && foundryup   (then add ~/.foundry/bin to PATH)\"; exit 1; }; forge test -vv",
+    "fmt": "forge fmt",
+    "deploy:sepolia": "forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast",
+    "export-abi": "node scripts/export-abi.mjs",
+    "typecheck": "echo 'contracts: solidity, see pnpm contracts:test'"
+  },
+  "main": "./src-ts/index.ts",
+  "types": "./src-ts/index.ts",
+  "exports": {
+    ".": "./src-ts/index.ts",
+    "./abi/*": "./abi/*"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^5.1.0"
+  }
+}

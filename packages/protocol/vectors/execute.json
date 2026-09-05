@@ -1,0 +1,18 @@
+{
+  "_comment": "Frozen cross-language test vector. Solidity and TypeScript must both reproduce `digest`. Changing any field here is a `protocol:` PR that breaks every signature.",
+  "chainId": 11155111,
+  "gate": "0x1111111111111111111111111111111111111111",
+  "nonce": "0",
+  "to": "0x2222222222222222222222222222222222222222",
+  "value": "10000000000000000",
+  "data": "0x",
+  "deadline": "2000000000",
+  "dataHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+  "digest": "0xc56ce0a94d4eca26131f5503a69d659d1aea43e8bb835943e0a463719f6862ad",
+  "agentKey": "0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba",
+  "agentAddress": "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+  "agentSig": "0x15589acf02599c31bbde02435ac09fbd25a2c699b9ec71c25193eaceaf5cfb6905f18b7fba9a8d84377bfa3621cec94c2e00bc438083937dc099d4565883b88c1c",
+  "humanKey": "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+  "humanAddress": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+  "humanSig": "0xedd3038c270dee8f1e411c8ec4fce08958c5f56033dd959a251e8f961b70e4485444cf36280047a1b8e3f9489df7e809b7d6bb97813ef78c66f05bb2bc92aaf31c"
+}

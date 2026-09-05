@@ -1,0 +1,10 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# These ship prebuilt binaries; their install scripts are expected.
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true
+  sharp: true
+  "@serialport/bindings-cpp": true

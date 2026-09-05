@@ -1,0 +1,30 @@
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+build/
+cache/
+coverage/
+.turbo/
+*.tsbuildinfo
+
+.env
+.env.*
+!.env.example
+
+.DS_Store
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Foundry
+packages/contracts/out/
+packages/contracts/cache/
+packages/contracts/broadcast/
+
+# Local runtime state
+apps/*/proposals.jsonl
+apps/bridge/key.json
+
+.vercel

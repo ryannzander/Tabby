@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm contracts:test)",
+      "Bash(pnpm --filter :*)",
+      "Bash(forge test:*)",
+      "Bash(forge build:*)",
+      "Bash(forge fmt:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)"
+    ],
+    "deny": [
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Bash(git push --force:*)"
+    ]
+  },
+  "env": {
+    "PATH": "${HOME}/.foundry/bin:${PATH}"
+  }
+}
