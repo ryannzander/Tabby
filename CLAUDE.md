@@ -38,7 +38,8 @@ pnpm typecheck
 pnpm dev                               # turbo, all apps
 ```
 
-Foundry lives at `~/.foundry/bin`; add it to PATH if `forge` is not found.
+If `forge` is not found, Foundry is at `~/.foundry/bin` or `~/.config/.foundry/bin` (when
+`XDG_CONFIG_HOME` is set). `./scripts/setup.sh` locates it; do not hardcode either path.
 
 ## Style
 

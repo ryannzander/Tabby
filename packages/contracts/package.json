@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "command -v forge >/dev/null || { echo \"forge not found. Install: curl -L https://foundry.paradigm.xyz | bash && foundryup   (then add ~/.foundry/bin to PATH)\"; exit 1; }; forge build && node scripts/export-abi.mjs",
-    "test": "command -v forge >/dev/null || { echo \"forge not found. Install: curl -L https://foundry.paradigm.xyz | bash && foundryup   (then add ~/.foundry/bin to PATH)\"; exit 1; }; forge test -vv",
+    "build": "command -v forge >/dev/null || { echo \"forge not found. Run ./scripts/setup.sh, or install manually: curl -L https://foundry.paradigm.xyz | bash && foundryup   (foundryup prints the bin path to add to PATH; it is ~/.foundry/bin, or ~/.config/.foundry/bin when XDG_CONFIG_HOME is set)\"; exit 1; }; forge build && node scripts/export-abi.mjs",
+    "test": "command -v forge >/dev/null || { echo \"forge not found. Run ./scripts/setup.sh, or install manually: curl -L https://foundry.paradigm.xyz | bash && foundryup   (foundryup prints the bin path to add to PATH; it is ~/.foundry/bin, or ~/.config/.foundry/bin when XDG_CONFIG_HOME is set)\"; exit 1; }; forge test -vv",
     "fmt": "forge fmt",
     "deploy:sepolia": "forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast",
     "export-abi": "node scripts/export-abi.mjs",

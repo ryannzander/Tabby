@@ -52,8 +52,11 @@ Foundry is required for the contracts:
 
 ```bash
 curl -L https://foundry.paradigm.xyz | bash && foundryup
-export PATH="$HOME/.foundry/bin:$PATH"     # add this to your shell profile
 ```
+
+`foundryup` prints the bin directory to add to your shell profile. It is `~/.foundry/bin` on
+most machines, but `~/.config/.foundry/bin` if `XDG_CONFIG_HOME` is set — `./scripts/setup.sh`
+finds it either way.
 
 OpenZeppelin comes from pnpm (`foundry.toml` remaps it into `node_modules`), so run
 `pnpm install` before `forge test`.

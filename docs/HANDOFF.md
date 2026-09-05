@@ -11,11 +11,10 @@ cd FlippyTheDolphin
 ```
 
 That installs pnpm and Foundry, creates the `.env` files from the examples, and runs both test
-suites. It is safe to re-run. If Foundry gets installed fresh, add this to your shell profile:
-
-```bash
-export PATH="$HOME/.foundry/bin:$PATH"
-```
+suites. It is safe to re-run. When it installs Foundry fresh it prints the exact `export PATH=...`
+line to add to your shell profile — the location differs by machine (`~/.foundry/bin` normally,
+`~/.config/.foundry/bin` when `XDG_CONFIG_HOME` is set), so copy the line it prints rather than
+guessing.
 
 **Verify you're in a good state** — these should pass on a clean clone with no config:
 
