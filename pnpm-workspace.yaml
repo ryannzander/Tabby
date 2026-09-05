@@ -8,3 +8,6 @@ allowBuilds:
   unrs-resolver: true
   sharp: true
   "@serialport/bindings-cpp": true
+
+minimumReleaseAgeExclude:
+  - '@anthropic-ai/sdk@0.124.0'

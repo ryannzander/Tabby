@@ -16,6 +16,7 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "preview": "next build && next start",
+    "spike:agent": "tsx src/server/agent/spike.ts",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },
@@ -36,7 +37,7 @@
     "@flippy/protocol": "workspace:*",
     "@flippy/contracts": "workspace:*",
     "viem": "^2.21.0",
-    "@anthropic-ai/sdk": "^0.68.0"
+    "@anthropic-ai/sdk": "^0.124.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
@@ -52,6 +53,7 @@
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4.0.15",
+    "tsx": "^4.19.2",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.27.0"
   },
