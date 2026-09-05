@@ -13,11 +13,26 @@ that depends on it, and announced in the group chat.
 
 | | Workstream | Owner | Brief |
 |---|---|---|---|
-| A | contracts + protocol | — | [docs/workstreams/contracts.md](docs/workstreams/contracts.md) |
-| B | web app, agent loop, shop | — | [docs/workstreams/app.md](docs/workstreams/app.md) |
-| C | Flipper + bridge | the person with the Flipper | [docs/workstreams/device.md](docs/workstreams/device.md) |
+| A | contracts + protocol | **@IGanjali** | [docs/workstreams/contracts.md](docs/workstreams/contracts.md) |
+| B | web app, agent loop, shop | **@ryannzander** | [docs/workstreams/app.md](docs/workstreams/app.md) |
+| C | Flipper + bridge | **@AnshuPlayz17** (has the Flipper) | [docs/workstreams/device.md](docs/workstreams/device.md) |
 
-Put your names in that table in your first PR.
+Rough sizing: B is about half the work, A and C a quarter each. If A finishes early they help
+B with the shop; if C finishes early they start the on-device signer.
+
+**Only C touches the Flipper.** A and B build against `MockHumanSigner` all week. The test of
+whether this split worked is M3: when C swaps the mock for the real device, B's code should not
+change by a single line.
+
+### The three moments anyone waits on anyone
+
+1. **Hour 2** — `packages/protocol` is merged. Already done in the scaffold, so this one is free.
+2. **M1** — A commits the Sepolia address. B cannot send a real transaction before this, but can
+   build everything else against the mock.
+3. **M3** — C connects the Flipper. Nothing else is blocked; it replaces one implementation.
+
+Everything else runs in parallel. If you find yourself waiting, say so in the chat — it means an
+interface is missing and that is a `protocol:` PR, not a queue.
 
 ## Branches
 

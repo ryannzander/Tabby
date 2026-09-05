@@ -62,6 +62,17 @@ OpenZeppelin comes from pnpm (`foundry.toml` remaps it into `node_modules`), so 
 interface as the real device and can auto-approve, auto-reject, or ask you `y/n` in the
 terminal. Two thirds of the project is built against it.
 
+## Who's doing what
+
+| | Workstream | Owner | Start here |
+|---|---|---|---|
+| A | contracts, protocol, deploys | @IGanjali | [brief](docs/workstreams/contracts.md) · [issue #4](https://github.com/ryannzander/FlippyTheDolphin/issues/4) |
+| B | web app, agent loop, shop | @ryannzander | [brief](docs/workstreams/app.md) · [issue #2](https://github.com/ryannzander/FlippyTheDolphin/issues/2) |
+| C | Flipper + bridge | @AnshuPlayz17 | [brief](docs/workstreams/device.md) · [issue #1](https://github.com/ryannzander/FlippyTheDolphin/issues/1) |
+
+Three issues are labelled `blocker` and should be picked up in hour one. Everything else is
+labelled by milestone on the [issue board](https://github.com/ryannzander/FlippyTheDolphin/issues).
+
 ## Where to start reading
 
 1. [`docs/SPEC.md`](docs/SPEC.md) — architecture, contract design, milestones, cut lines, demo script.
