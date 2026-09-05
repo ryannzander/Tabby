@@ -4,7 +4,7 @@ import MockTokenAbi from "../abi/MockToken.json" with { type: "json" };
 import MockSwapAbi from "../abi/MockSwap.json" with { type: "json" };
 import MockMerchantAbi from "../abi/MockMerchant.json" with { type: "json" };
 
-export const abis = { TappyGate, MockToken, MockSwap, MockMerchant } as const;
+export const abis = { TappyGate: TappyGateAbi, MockToken: MockTokenAbi, MockSwap: MockSwapAbi, MockMerchant: MockMerchantAbi } as const;
 export { TappyGateAbi };
 export { MockTokenAbi };
 export { MockSwapAbi };
