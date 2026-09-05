@@ -48,6 +48,17 @@ If `forge` is not found, Foundry is at `~/.foundry/bin` or `~/.config/.foundry/b
   should stop the process, not degrade quietly — a silent failure on stage is unrecoverable.
 - Testnet keys are checked in on purpose. Do not treat them as secrets, and do not add real ones.
 
+## Writing
+
+Read `.claude/skills/unslop/SKILL.md` and apply it to everything you write. Chat replies, commit
+messages, PR bodies, comments, docs. All of it, every time, without being asked.
+
+The rule that trips Claude most often is #13. No em dashes at all, and no swapping in parentheses
+or en dashes to dodge it. End the sentence or use a comma.
+
+The skill is marked `disable-model-invocation`, so it is a standing instruction rather than
+something to invoke. `/unslop` runs it as a one-off pass over text that already exists.
+
 ## When writing Anthropic API code
 
 Use the `claude-api` skill. Model ids and the thinking/effort parameters have changed recently
