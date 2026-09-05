@@ -39,8 +39,8 @@ suite too. That is a PATH problem, not a broken test.
 | `packages/contracts` | **Working.** `TappyGate` + mocks, 13 tests, deploy script, ABI export. Not deployed anywhere yet. |
 | `apps/bridge` | **Written, never run against hardware.** Serial CLI client and `FlipperHumanSigner` compile and typecheck. Untested on a real Flipper. |
 | `device/tappy-js` | **Written, never run.** Same caveat. |
-| `apps/web` server | **Most of the way, `chat.send` on `b/chat-send`.** Approval channel, proposal store, agent loop, chat. The tools are the hole: they need a deploy. |
-| `apps/web` UI | **T3 scaffold only.** The default landing page. Nothing has been designed. |
+| `apps/web` server | **Most of the way, on `b/chat-send`.** Approval channel, proposal store, agent loop, chat, wallet. `AGENT_MODE=mock` stands in for the chain, the device and the model. |
+| `apps/web` UI | **Two screens on `b/chat-send`.** Wallet and chat, built but never seen: the machine had no database. |
 | `apps/mobile`, `device/tappy-c` | READMEs only. Deliberately not started. |
 
 Nothing is deployed to any chain. `apps/web/.env` has a real `DATABASE_URL`, `BRIDGE_TOKEN` and
@@ -113,23 +113,51 @@ vitest cases.
 - **The user's row is written before the turn runs, not with the reply.** A turn can fail after
   the model has already written a proposal, and a proposal that no message in the transcript asked
   for is worse than a dangling user row.
-- **`agentToolsFromEnv` throws.** `ChainReader` and `ShopReader` still have no implementation, so
-  `chat.send` fails on the tools by name rather than running the model with none of them.
+- **`agentToolsFromEnv` throws in `live` mode.** `ChainReader` and `ShopReader` still have no real
+  implementation, so it fails by name rather than running the model with no tools.
+- **`AGENT_MODE=mock` runs the whole thing with nothing real behind it.** `server/agent/mock.ts`
+  stands in for the chain, the device and the model at once, because all three are missing and
+  none of them are our code. `ScriptedResponses` matches keywords and calls the real tools through
+  the real loop, so only the choice of tool is fake. Opt-in: the default is `live`, because an
+  invented balance looks exactly like a real one. Both screens say so when it is on.
+- **There are two screens.** Wallet is the main one and the navbar leads to the chat, per Ryan.
+  The wallet leads with a panel drawn as the Flipper's LCD, and when a proposal is waiting that
+  panel becomes the request, so the screen and the device show the same words at once.
+- **`next build` had never worked, on any commit.** Two causes, both confirmed against the tree
+  before this session's changes. `@tappy/protocol` imports its own modules as `./types.js`, which
+  Node and tsc resolve and webpack does not, so `next.config.js` now maps `.js` to `.ts`. And lint
+  had never run, so errors had piled up in `loop.ts`, `approvals.ts` and `schema.ts`. Turbopack
+  serves `dev` and is more forgiving, which is why nobody hit either.
+- **CI ran neither the web tests, nor lint, nor the build.** Fifty-two tests only ever ran on
+  somebody's laptop. All three are in the workflow now. The build is the only check that resolves
+  modules the way Vercel will.
+- **Nobody has looked at either screen.** They compile, typecheck, lint and build. The machine
+  they were written on had no Postgres, no Docker and no `.env`, and both pages read the database.
 
 ## Your next three moves
 
 You own workstream B. In order:
 
-1. **Apply migration `0001` and run `pnpm --filter @tappy/web verify:chat`.** The migration has
-   never been applied to Supabase and the verify script has never been run, because the machine
-   session 3 ran on had no Postgres and no `.env`. The script uses a scripted model, so it needs
-   no `OPENAI_API_KEY`. Do this before building anything on top of the chat.
-2. **`ChainReader` and `ShopReader`.** The only thing standing between `chat.send` and a working
-   turn. `ChainReader` is one viem client. Needs @IGanjali's deploy, issue #5.
-3. **Issue #2**, still open. `spike.ts` has never run. One command once the key is set, then fill
-   in `docs/spikes.md` entry 2. Do this before trusting the loop on stage.
+1. **Apply migration `0001`, then look at the app.** The migration has never been applied to
+   Supabase, `verify:chat` has never run, and neither screen has ever been seen by anybody. All
+   three need a database and nothing else:
 
-Then the UI, which nobody has designed. Do not let Claude pick its shape again.
+   ```bash
+   pnpm --filter @tappy/web db:migrate
+   pnpm --filter @tappy/web verify:chat      # scripted model, needs no API key
+   AGENT_MODE=mock pnpm --filter @tappy/web dev
+   ```
+
+   In mock mode the whole flow runs with no chain, no Flipper and no OpenAI budget. Type
+   "send 0.01 eth to 0x7099..." and a proposal should appear on the wallet screen.
+2. **`ChainReader` and `ShopReader` for real.** The mock versions are in `agent/mock.ts` and the
+   real ones go behind the same interfaces. `ChainReader` is one viem client. Needs @IGanjali's
+   deploy, issue #5.
+3. **Issue #2**, still open. `spike.ts` has never run, and there is no OpenAI budget to run it
+   with. When there is, one command, then fill in `docs/spikes.md` entry 2. Do it before trusting
+   the real loop on stage.
+
+The shop and the relayer are the two pieces of workstream B with nothing written at all.
 
 Branch as `b/<thing>`. `main` is protected: both CI checks must pass, no reviews required,
 self-merge after 30 minutes if nobody looks.

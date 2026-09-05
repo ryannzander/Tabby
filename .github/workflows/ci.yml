@@ -35,8 +35,12 @@ jobs:
         run: pnpm --filter @tappy/web test
       - name: typecheck
         run: pnpm typecheck
+      # `next lint` loads next.config.js, which imports env.js and validates. There is no database
+      # here and lint does not need one.
       - name: lint
         run: pnpm --filter @tappy/web lint
+        env:
+          SKIP_ENV_VALIDATION: "1"
       # The build is the only check that resolves modules the way Vercel will. Turbopack serves
       # `dev` and is more forgiving, so a broken production build is otherwise invisible until a
       # deploy fails. No real database is reached: nothing is prerendered.
