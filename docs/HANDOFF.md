@@ -1,6 +1,7 @@
 # Handoff — picking this up on another machine
 
-Written 2026-09-04. Everything described here is pushed to `main` at `56eb88c`.
+Written 2026-09-04, updated the same day at the end of Ryan's first working session.
+Everything described here is pushed. `main` is at `4b4b849`.
 
 ## Get running
 
@@ -45,17 +46,32 @@ Nothing is deployed to any chain. No `.env` has real values in it yet.
 4. `docs/spikes.md` — four open unknowns, three of them for hour one.
 5. `CONTRIBUTING.md` — branch and PR rules.
 
+## What happened in session 1
+
+Nine commits on `main`, plus one branch that is deliberately not merged.
+
+- The project is **Tappy** now, not Flippy. The contract is `TappyGate` and the EIP-712 domain
+  string changed with it, so `vectors/execute.json` was regenerated. Both test suites still agree
+  on the new digest. DECISIONS #12.
+- The agent runs on **OpenAI `gpt-5.6-terra`**, not Claude. Cost. DECISIONS #11. Tool calls must
+  go through `/v1/responses`; GPT-5.6 rejects function tools on `/v1/chat/completions`.
+- **Issue #3 is closed.** The approval channel is a polled table, not a socket. It is
+  authenticated, and it has been driven end to end against real Postgres. `pnpm --filter
+  @tappy/web verify:channel` runs 11 checks.
+- **Supabase is live** and the migration is applied. `DATABASE_URL` is in `apps/web/.env`.
+- **`.claude/skills/unslop`** is a standing writing rule, wired in through CLAUDE.md.
+
 ## Your next three moves
 
 You own workstream B. In order:
 
-1. **Issue #2** — one hard-coded model turn that produces a `propose_send` tool call. One script,
-   no UI. Model is `gpt-5.6-terra`; tool calls go through `/v1/responses`, not
-   `/v1/chat/completions`. Record the result in `docs/spikes.md`.
-2. **Issue #3** — done. The bridge polls `approvals.next` and posts to `approvals.submit`.
-   No WebSocket, no protocol change. `docs/spikes.md` entry 3 has the reasoning.
-3. **Issue #6 (M2)** — chat → agent → proposal → mock approval → transaction on Sepolia. This
-   needs @IGanjali to finish issue #5 (deploy) first, so start #2 and #3 while you wait.
+1. **Issue #2** — the script exists at `apps/web/src/server/agent/spike.ts` and has never run.
+   It needs `OPENAI_API_KEY` in `apps/web/.env`. One command, then fill in `docs/spikes.md`
+   entry 2 and close the issue.
+2. **The proposal store.** `buildProposal` plus the `transition` that throws on an illegal move.
+   Pure logic, needs no key and no chain, and M2 cannot start without it. Not started.
+3. **Issue #6 (M2)** — chat → agent → proposal → mock approval → transaction on Sepolia. Needs
+   @IGanjali to deploy first (issue #5).
 
 Branch as `b/<thing>`. `main` is protected: both CI checks must pass, no reviews required,
 self-merge after 30 minutes if nobody looks.
@@ -75,6 +91,26 @@ self-merge after 30 minutes if nobody looks.
 - **Don't add prompt-injection defences to the agent tools.** The defence is the human pressing
   Back. That's the whole pitch. See `docs/DECISIONS.md` #10.
 
+## Decide this before you write more code
+
+**`b/demo-screen` is pushed but not merged, on purpose.** It is a working chat and wallet screen
+with a 128x64 Flipper mock, three new routers, and the T3 example post table deleted. It came out
+of a one-line instruction, so every design choice in it is Claude's rather than Ryan's. Read it and
+merge it, or delete the branch. Do not leave it rotting.
+
+**Claude was running in bypass permissions mode all session**, which is why it pushed to `main`,
+merged its own PR, renamed the repo's contract and built a UI nobody asked for the shape of. Before
+the next session, pick one: plan mode (Shift+Tab, proposals need approval before any edit), or a
+`permissions.deny` entry on pushing to `main` in `.claude/settings.json`. Nothing has been changed
+about this yet.
+
+**Rotate the Supabase password.** It was pasted into a chat transcript. Reset it in the Supabase
+dashboard and replace the one line in `apps/web/.env`.
+
+**Open product question, unanswered:** whether the agent only proposes transactions from the wallet
+(what the SPEC says today) or also writes and deploys new contracts (what Ryan said out loud). The
+second is a much larger feature and is not planned anywhere.
+
 ## Still named the old thing
 
 The project is Tappy now (DECISIONS #12), but the GitHub repo is still `FlippyTheDolphin`, so the
@@ -88,6 +124,9 @@ nothing breaks either way and the URLs above keep working after the rename.
 - Whether Flipper CLI `storage` commands work while a JS app is in the foreground. The entire
   device channel depends on it. Assigned to @AnshuPlayz17, issue #1.
 - Expo vs bare React Native for `apps/mobile`. Not urgent; blocks nothing.
+- Spike 1 is **still unrun** and it was meant to be hour one. Nobody knows whether the Flipper's
+  file commands work while its screen shows a dialog, and the whole device channel rests on it.
+  @AnshuPlayz17, issue #1.
 
 ## Team
 
