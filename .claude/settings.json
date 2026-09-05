@@ -22,8 +22,5 @@
       "Read(./**/.env.*)",
       "Bash(git push --force:*)"
     ]
-  },
-  "env": {
-    "PATH": "${HOME}/.foundry/bin:${PATH}"
   }
 }

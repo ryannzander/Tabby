@@ -13,6 +13,9 @@ coverage/
 .env.*
 !.env.example
 
+# Personal Claude overrides. .claude/settings.json IS shared and committed.
+.claude/settings.local.json
+
 .DS_Store
 *.log
 npm-debug.log*

@@ -36,6 +36,12 @@ Neither key can move funds alone.
 ## Quick start
 
 ```bash
+./scripts/setup.sh      # installs pnpm + Foundry, creates .env files, runs the tests
+```
+
+Or by hand:
+
+```bash
 nvm use                 # Node 22
 pnpm install
 pnpm contracts:test     # 13 tests, includes the cross-language digest vector
