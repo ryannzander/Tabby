@@ -11,7 +11,7 @@
  * shapes are already right.
  */
 
-import { and, eq, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, gt, isNull, lt } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { recoverAddress } from "viem";
 
@@ -70,7 +70,7 @@ export const approvalsRouter = createTRPCRouter({
       const live = await ctx.db
         .select()
         .from(signerSessions)
-        .where(sql`${signerSessions.lastSeenAt} > ${staleBefore}`);
+        .where(gt(signerSessions.lastSeenAt, staleBefore));
 
       const other = live.find((s) => s.address !== input.address);
       if (other) {
@@ -195,7 +195,7 @@ export const approvalsRouter = createTRPCRouter({
     const [live] = await ctx.db
       .select()
       .from(signerSessions)
-      .where(sql`${signerSessions.lastSeenAt} > ${staleBefore}`)
+      .where(gt(signerSessions.lastSeenAt, staleBefore))
       .limit(1);
 
     if (!live) return { connected: false as const };

@@ -112,9 +112,15 @@ in tension with DECISIONS #10: that rule is about the agent's tools, not the dev
 **Cost:** up to 500 ms before the Flipper buzzes, plus one relayer tick after the press. Against a
 human reaching for a button and 12 to 30 s of Sepolia inclusion, nobody will see it.
 
-**Not done yet:** no migration has been generated or run. There is no `DATABASE_URL`, so none of
-this has touched a real Postgres. `BRIDGE_TOKEN` and `HUMAN_ADDRESS` are not in `.env.example` yet
-and both need to be, or the channel stays shut.
+**Verified against real Postgres** (Supabase, 2026-09-04). `pnpm --filter @tappy/web verify:channel`
+drives announce, poll, sign, submit and then tries what the channel should refuse. 11 checks pass.
+Running it found two bugs typecheck could not: `jsonb` columns go through `JSON.stringify`, which
+throws on the `bigint` inside `Action`, so the column stores the zod *input* shape with amounts as
+strings; and a raw ``sql`col > ${date}` `` template hands postgres-js a bare `Date` with no type to
+bind, so both comparisons use `gt()` now.
+
+**Still needed:** `BRIDGE_TOKEN` and `HUMAN_ADDRESS` are not in `.env.example`, and the channel
+stays shut until both are set.
 
 ---
 

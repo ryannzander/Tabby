@@ -4,7 +4,18 @@
 import { sql } from "drizzle-orm";
 import { index, pgTableCreator, uniqueIndex } from "drizzle-orm/pg-core";
 
-import type { Action, ProposalStatus, ProposalView, SignerKind } from "@tappy/protocol";
+import type { z } from "zod";
+
+import { actionSchema } from "@tappy/protocol";
+import type { ProposalStatus, ProposalView, SignerKind } from "@tappy/protocol";
+
+/**
+ * `Action` holds `bigint` amounts and `JSON.stringify` throws on those, so the column stores the
+ * zod *input* shape, where amounts are strings. Read it back with `actionSchema.parse(row.action)`
+ * and the bigints come back. Typing the column as `Action` compiles fine and fails at runtime,
+ * which is the worst of both.
+ */
+type StoredAction = z.input<typeof actionSchema>;
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -49,7 +60,7 @@ export const proposals = createTable(
     callValue: d.text().notNull(),
     callData: d.text().notNull(),
 
-    action: d.jsonb().$type<Action>().notNull(),
+    action: d.jsonb().$type<StoredAction>().notNull(),
     /** Exactly what the Flipper renders. Built once by the hub so the device never derives it. */
     view: d.jsonb().$type<ProposalView>().notNull(),
 
